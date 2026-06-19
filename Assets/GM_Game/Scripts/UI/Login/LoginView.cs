@@ -12,6 +12,8 @@ namespace UI.Login
     {
         [SerializeField, Header("登录窗口")] private LoginWindow _loginWindow;
         [SerializeField, Header("注册窗口")] private RegistWindow _registWindow;
+        [SerializeField, Header("登录服务器窗口")] private GameServerWindow _gameServerWindow;
+        [SerializeField, Header("服务器列表窗口")] private ServerListWindow _serverListWindow;
 
         private Dictionary<WindowType, UIBase> _windowDict;
 
@@ -20,7 +22,9 @@ namespace UI.Login
             _windowDict = new Dictionary<WindowType, UIBase>
             {
                 { WindowType.LoginWindow, _loginWindow },
-                { WindowType.RegistWindow, _registWindow }
+                { WindowType.RegistWindow, _registWindow },
+                { WindowType.GameServerWindow, _gameServerWindow },
+                { WindowType.ServerListWindow, _serverListWindow }
             };
 
             foreach (var window in _windowDict.Values)
@@ -48,12 +52,17 @@ namespace UI.Login
         public void ShowWindow(WindowType windowType)
         {
             // 先隐藏所有窗口
-            foreach (var window in _windowDict.Values)
+            foreach (var item in _windowDict)
             {
-                window.Hide();
-            }
-            // 显示对应的窗口
-            _windowDict[windowType].Show();
+                if (item.Key == windowType)
+                {
+                    item.Value.Show();
+                }
+                else
+                {
+                    item.Value.Hide();
+                }
+                }
         }
     }
 }

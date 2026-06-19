@@ -87,6 +87,7 @@ namespace UI.Login
 
             // 5、服务器验证，验证成功则跳转到主界面
             Debug.Log("登录成功");
+            UIRoot.Instance.LoginCtrl.ShowWindow(WindowType.GameServerWindow);
         }
 
         private void OnDestroy()

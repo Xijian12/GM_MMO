@@ -5,4 +5,6 @@ public enum WindowType
 {
     LoginWindow,    // 登录窗口
     RegistWindow,   // 注册窗口
+    GameServerWindow, // 游戏服务器窗口
+    ServerListWindow, // 服务器列表窗口
 }
