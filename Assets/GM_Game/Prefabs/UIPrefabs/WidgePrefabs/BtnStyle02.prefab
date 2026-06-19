@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 1473025288397520810}
   - component: {fileID: 8350819855141415478}
   m_Layer: 0
-  m_Name: Btn_Style02
+  m_Name: BtnStyle02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -62,7 +62,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -146,7 +146,7 @@ GameObject:
   - component: {fileID: 8070529929956671354}
   - component: {fileID: 7990730249640184320}
   m_Layer: 0
-  m_Name: Text (TMP)
+  m_Name: TMPText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

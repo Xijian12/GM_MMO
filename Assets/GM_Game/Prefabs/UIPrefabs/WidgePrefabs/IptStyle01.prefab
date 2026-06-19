@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5404097186614011747}
   - component: {fileID: 7536148780349024626}
   m_Layer: 0
-  m_Name: Ipt_Style01
+  m_Name: IptStyle01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -174,7 +174,7 @@ GameObject:
   - component: {fileID: 1880581685128153565}
   - component: {fileID: 6670799121725684945}
   m_Layer: 0
-  m_Name: text_value
+  m_Name: TMPValue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -308,7 +308,7 @@ GameObject:
   - component: {fileID: 578876394144907434}
   - component: {fileID: 8208315067506020567}
   m_Layer: 0
-  m_Name: Image
+  m_Name: ImgBG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -383,7 +383,7 @@ GameObject:
   - component: {fileID: 6832896274056511743}
   - component: {fileID: 6615680722947611514}
   m_Layer: 0
-  m_Name: Text (TMP)
+  m_Name: TMPPlaceHolder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
