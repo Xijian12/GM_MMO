@@ -1,0 +1,18 @@
+root = true
+
+[*.cs]
+# Unity 生命周期函数（Awake/Start/OnDestroy 等）由引擎反射调用，禁用 RCS1213 误报
+dotnet_diagnostic.RCS1213.severity = none
+
+# var 使用规范
+csharp_style_var_when_type_is_apparent = true
+
+# 使用 readonly
+dotnet_diagnostic.IDE0044.severity = warning
+
+# 使用表达式体
+dotnet_diagnostic.IDE0022.severity = suggestion
+
+[*]
+# 项目编码统一为UTF-8
+charset = utf-8-bom
