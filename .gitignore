@@ -109,3 +109,23 @@ InitTestScene*.unity*
 # Cursor
 .cursor/index/
 .cursor/cache/
+
+#Build
+/[Bb]uild/
+
+# YooAsset Build Cache
+/yoo/
+/Bundles/
+
+# ========== HybridCLR ==========
+/HybridCLRData/
+
+# 热更 DLL 和 AOT 补充元数据（由 Build/BuildDll 生成）
+/Assets/GM_Game/Dlls/*.bytes
+
+# ========== YooAsset ==========
+# Bundles/ 和 yoo/ 已有，补充 StreamingAssets 首包输出
+/Assets/StreamingAssets/yoo/
+
+# 任意位置的 bundle 文件（防止误提交）
+*.bundle
