@@ -1,4 +1,6 @@
 {
     "omnisharp.enableEditorConfigSupport": true,
-    "omnisharp.enableRoslynAnalyzers": true
+    "omnisharp.enableRoslynAnalyzers": true,
+    "git.ignoreLimitWarning": true,
+    "dotnet.defaultSolution": "disable"
 }
