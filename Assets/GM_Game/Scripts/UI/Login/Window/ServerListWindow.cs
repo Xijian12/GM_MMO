@@ -1,6 +1,7 @@
 using Common;
 using TMPro;
 using UnityEngine;
+using YooAsset;
 
 /**
  * Title:服务器列表窗口
@@ -19,9 +20,29 @@ namespace UI.Login
             _btnClose.AddClick(OnCloseBtnClicked);
         }
 
+        /// <summary>
+        /// 初始化服务器列表窗口
+        /// </summary>
+        private void Start()
+        {
+            CreateServerListItem();
+        }
+
         // TODO 创建服务器列表项
         private void CreateServerListItem()
         {
+            for (int i = 0; i < 50; i++)
+            {
+                Global.Instance.Yoopackage.LoadAssetAsync<GameObject>("Assets/GM_Game/Prefabs/UIPrefabs/ServerListWidgetItem")
+                    .Completed += (AssetOperationHandle handle) =>
+                    {
+                        GameObject go = handle.InstantiateSync();
+                        go.transform.SetParent(_itemParentTrans);
+                        go.transform.localScale = Vector3.one;
+                        go.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                        go.SetActive(true);
+                    };
+            }
 
         }
 
