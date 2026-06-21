@@ -1,4 +1,5 @@
 ﻿using Common;
+using Manager;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -55,21 +56,25 @@ namespace UI.Login
         /// </summary>
         public void OnLoginBtnClicked()
         {
+            // TODO 这里的所有文本都需要加入到文案表中
             // 1、判断输入框是否为空
             if (string.IsNullOrEmpty(_iptAcct.text))
             {
-                Debug.Log("账号为空");
+                TipsMgr.Instance.ShowSystemTips("账号不能空...");
+                Debug.Log("账号为空...");
                 return;
             }
             if (string.IsNullOrEmpty(_iptPasd.text))
             {
-                Debug.Log("密码为空");
+                TipsMgr.Instance.ShowSystemTips("密码不能为空...");
+                Debug.Log("密码为空...");
                 return;
             }
             // 2、判断用户协议是否勾选，是则保存到PlayerPrefs
             if (!_toAgreement.isOn)
             {
-                Debug.Log("用户协议未勾选");
+                TipsMgr.Instance.ShowSystemTips("请阅读并勾选用户协议...");
+                Debug.Log("用户协议未勾选...");
                 return;
             }
 
@@ -90,6 +95,8 @@ namespace UI.Login
 
             // 5、服务器验证，验证成功则跳转到主界面
             Debug.Log("登录成功");
+            TipsMgr.Instance.ShowSystemTips("登录成功...");
+
             UIRoot.Instance.LoginViewCtrl.ShowWindow(WindowType.GameServerWindow);
         }
 
