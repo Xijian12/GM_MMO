@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Common;
 using UnityEngine;
 
 namespace UI.Login
 {
-
     /**
      * Title:登录视图
      * Desciption:它是登录模块所有Window的管理视图类
@@ -15,54 +14,24 @@ namespace UI.Login
         [SerializeField, Header("登录服务器窗口")] private GameServerWindow _gameServerWindow;
         [SerializeField, Header("服务器列表窗口")] private ServerListWindow _serverListWindow;
 
-        private Dictionary<WindowType, UIBase> _windowDict;
-
-        public override void InitView()
+        /// <summary>
+        /// 注册窗口
+        /// </summary>
+        protected override void RegisterWindows()
         {
-            _windowDict = new Dictionary<WindowType, UIBase>
-            {
-                { WindowType.LoginWindow, _loginWindow },
-                { WindowType.RegistWindow, _registWindow },
-                { WindowType.GameServerWindow, _gameServerWindow },
-                { WindowType.ServerListWindow, _serverListWindow }
-            };
+            windowDict.Add(WindowType.LoginWindow, _loginWindow);
+            windowDict.Add(WindowType.RegistWindow, _registWindow);
+            windowDict.Add(WindowType.GameServerWindow, _gameServerWindow);
+            windowDict.Add(WindowType.ServerListWindow, _serverListWindow);
+        }
 
-            foreach (var window in _windowDict.Values)
-            {
-                window.InitView();
-            }
-
+        /// <summary>
+        /// 窗口初始化完成
+        /// 默认显示登录窗口
+        /// </summary>
+        protected override void OnWindowsInited()
+        {
             ShowWindow(WindowType.LoginWindow);
-        }
-
-        /// <summary>
-        /// 根据WindowType返回对应的窗口
-        /// </summary>
-        /// <param name="windowType">窗口类型</param>
-        /// <returns>对应的窗口</returns>
-        public UIBase GetWindow(WindowType windowType)
-        {
-            return _windowDict[windowType];
-        }
-
-        /// <summary>
-        /// 根据WindowType显示对应的窗口
-        /// </summary>
-        /// <param name="windowType">窗口类型</param>
-        public void ShowWindow(WindowType windowType)
-        {
-            // 先隐藏所有窗口
-            foreach (var item in _windowDict)
-            {
-                if (item.Key == windowType)
-                {
-                    item.Value.Show();
-                }
-                else
-                {
-                    item.Value.Hide();
-                }
-                }
         }
     }
 }

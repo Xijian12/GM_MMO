@@ -1,46 +1,48 @@
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
-/**
- * Title:
- * Desciption:
- **/
-public class InputStyle01 : MonoBehaviour
+
+namespace UI.Style
 {
-    [SerializeField, Header("占位符")] private TMP_Text _textPlaceholder;
-    [SerializeField, Header("占位符上移高度")] private float _textMoveHeight = 20f;
-    [SerializeField,Header("动画持续时间")] private float _animDuration = 0.1f;
-    private float _textPosY;
-
-    private void Start()
+    /**
+     * Title:
+     * Desciption:
+     **/
+    public class InputStyle01 : MonoBehaviour
     {
-        _textPosY = _textPlaceholder.rectTransform.anchoredPosition.y;
-        TMP_InputField ipt = GetComponent<TMP_InputField>();
+        [SerializeField, Header("占位符")] private TMP_Text _textPlaceholder;
+        [SerializeField, Header("占位符上移高度")] private float _textMoveHeight = 20f;
+        [SerializeField, Header("动画持续时间")] private float _animDuration = 0.1f;
+        private float _textPosY;
 
-        // 默认情况下，如果输入框不为空，则占位符向上移动_textMoveHeight
-        if (!string.IsNullOrEmpty(ipt.text))
+        // 开始事件
+        private void Start()
         {
-            //DOTWEEN
-            _textPlaceholder.rectTransform.DOAnchorPosY(_textPosY + _textMoveHeight, _animDuration);
-        }
+            _textPosY = _textPlaceholder.rectTransform.anchoredPosition.y;
+            TMP_InputField ipt = GetComponent<TMP_InputField>();
 
-        // 当输入框选中时，占位符向上移动_textMoveHeight
-        ipt.onSelect.AddListener((string str) =>
-        {
-            // 这里的str和ipt.text是等价的
-            if (string.IsNullOrEmpty(ipt.text))
+            if (!string.IsNullOrEmpty(ipt.text))
             {
                 _textPlaceholder.rectTransform.DOAnchorPosY(_textPosY + _textMoveHeight, _animDuration);
             }
-        });
 
-        // 当不被选中时，回到默认位置
-        ipt.onDeselect.AddListener((string str) =>
-        {
-            if (string.IsNullOrEmpty(ipt.text))
+            // 输入框选中事件
+            ipt.onSelect.AddListener((string str) =>
             {
-                _textPlaceholder.rectTransform.DOAnchorPosY(_textPosY, _animDuration);
-            }
-        });
+                if (string.IsNullOrEmpty(ipt.text))
+                {
+                    _textPlaceholder.rectTransform.DOAnchorPosY(_textPosY + _textMoveHeight, _animDuration);
+                }
+            });
+
+            // 输入框取消选中事件
+            ipt.onDeselect.AddListener((string str) =>
+            {
+                if (string.IsNullOrEmpty(ipt.text))
+                {
+                    _textPlaceholder.rectTransform.DOAnchorPosY(_textPosY, _animDuration);
+                }
+            });
+        }
     }
 }

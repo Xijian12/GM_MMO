@@ -1,15 +1,15 @@
+﻿using Common;
 using TMPro;
+using UI;
 using UnityEngine;
-using Common;
 
 namespace UI.Login
 {
-
     /**
      * Title:注册窗口
      * Desciption:
      **/
-    public class RegistWindow : UIBase
+    public class RegistWindow : WindowBase
     {
         [SerializeField, Header("账号输入框")] private TMP_InputField _iptAcct;
         [SerializeField, Header("手机号码输入框")] private TMP_InputField _iptMobile;
@@ -20,7 +20,6 @@ namespace UI.Login
         [SerializeField, Header("获取验证码按钮")] private UGUIBtn _btnGetVerify;
         [SerializeField, Header("返回登录按钮")] private UGUIBtn _btnBackLogin;
 
-
         public override void InitView()
         {
             _btnRegist.AddClick(OnRegistBtnClicked);
@@ -28,6 +27,9 @@ namespace UI.Login
             _btnBackLogin.AddClick(OnBackLoginBtnClicked);
         }
 
+        /// <summary>
+        /// 注册按钮点击事件
+        /// </summary>
         public void OnRegistBtnClicked()
         {
             //1、判断输入框是否为空
@@ -72,15 +74,20 @@ namespace UI.Login
             Hide();
         }
 
+        /// <summary>
+        /// 获取验证码按钮点击事件
+        /// </summary>
         public void OnVerifyCodeBtnClicked()
         {
             Debug.Log("获取验证码成功...");
         }
 
+        /// <summary>
+        /// 返回登录按钮点击事件
+        /// </summary>
         public void OnBackLoginBtnClicked()
         {
-            // 跳转到登录窗口
-            UIRoot.Instance.LoginCtrl.ShowWindow(WindowType.LoginWindow);
+            UIRoot.Instance.LoginViewCtrl.ShowWindow(WindowType.LoginWindow);
         }
 
         private void OnDestroy()

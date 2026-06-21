@@ -1,9 +1,10 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace IndieImpulseAssets {
-    public class UISmoothTransitionMatValue : MonoBehaviour {
+namespace UI.Style
+{
+    public class UISmoothTransitionMatValue : MonoBehaviour
+    {
         public float startValue = -0.28f;
         public float endValue = 0.53f;
         public float duration = 0.78f;
@@ -12,29 +13,34 @@ namespace IndieImpulseAssets {
         private Material material;
         private float elapsedTime;
 
-        private void Awake() {
+        private void Awake()
+        {
             Image image = GetComponent<Image>();
-            if (image != null) {
-                material = Instantiate(image.material);  // Clone the material only once
+            if (image != null)
+            {
+                material = Instantiate(image.material);
                 image.material = material;
             }
         }
 
-        private void OnEnable() {
-            if (material == null) {
+        private void OnEnable()
+        {
+            if (material == null)
+            {
                 Debug.LogWarning("Material was not assigned.");
                 enabled = false;
                 return;
             }
 
-            material.SetFloat(MatValue, startValue); // Set initial value
-            elapsedTime = 0f;                        // Reset elapsed time
+            material.SetFloat(MatValue, startValue);
+            elapsedTime = 0f;
             enabled = true;
 
-            GetComponent<Image>().enabled = true; // Enable the texture for transition
+            GetComponent<Image>().enabled = true;
         }
 
-        private void Update() {
+        private void Update()
+        {
             if (material == null) return;
 
             elapsedTime += Time.deltaTime;
@@ -42,32 +48,38 @@ namespace IndieImpulseAssets {
             float currentOffset = Mathf.Lerp(startValue, endValue, t);
             material.SetFloat(MatValue, currentOffset);
 
-            // Disable Update when transition completes
-            if (t >= 1f) {
-                //enabled = false;
+            if (t >= 1f)
+            {
                 GetComponent<Image>().enabled = false;
             }
         }
 
-        private void OnDisable() {
-            if (setMatOnDisable && material != null) {
+        private void OnDisable()
+        {
+            if (setMatOnDisable && material != null)
+            {
                 material.SetFloat(MatValue, startValue);
             }
         }
 
-        public void SetScaleDirection(float scaleX) {
+        /// <summary>
+        /// 设置缩放方向
+        /// </summary>
+        public void SetScaleDirection(float scaleX)
+        {
             RectTransform rectTransform = GetComponent<RectTransform>();
-            if (rectTransform != null) {
+            if (rectTransform != null)
+            {
                 rectTransform.localScale = new Vector3(scaleX, rectTransform.localScale.y, rectTransform.localScale.z);
             }
         }
 
-        private void OnDestroy() {
-            if (material != null) {
-                Destroy(material); // Clean up the material instance when the object is destroyed
+        private void OnDestroy()
+        {
+            if (material != null)
+            {
+                Destroy(material);
             }
         }
-
-
     }
 }

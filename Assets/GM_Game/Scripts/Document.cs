@@ -3,7 +3,8 @@
  * Description:Unity中组件，插件等等功能的介绍
  */
 
-
+namespace GM
+{
 public class Document
 {
 
@@ -206,4 +207,5 @@ public class Document
      */
 
     #endregion
+}
 }

@@ -1,4 +1,4 @@
-using Common;
+﻿using Common;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +9,7 @@ namespace UI.Login
      * Title:登录窗口
      * Desciption:
      **/
-    public class LoginWindow : UIBase
+    public class LoginWindow : WindowBase
     {
         [SerializeField, Header("账号输入框")] private TMP_InputField _iptAcct;
         [SerializeField, Header("密码输入框")] private TMP_InputField _iptPasd;
@@ -35,19 +35,24 @@ namespace UI.Login
                 _iptAcct.text = PlayerPrefs.GetString("PlayerAccount");
             }
         }
+
         public override void InitView()
         {
             _btnLogin.AddClick(OnLoginBtnClicked);
             _btnGotoRegist.AddClick(OnGotoRegistBtnClicked);
         }
 
+        /// <summary>
+        /// 跳转注册按钮点击事件
+        /// </summary>
         public void OnGotoRegistBtnClicked()
         {
-            // 跳转到注册窗口
-            UIRoot.Instance.LoginCtrl.ShowWindow(WindowType.RegistWindow);
+            UIRoot.Instance.LoginViewCtrl.ShowWindow(WindowType.RegistWindow);
         }
 
-
+        /// <summary>
+        /// 登录按钮点击事件
+        /// </summary>
         public void OnLoginBtnClicked()
         {
             // 1、判断输入框是否为空
@@ -67,10 +72,8 @@ namespace UI.Login
                 Debug.Log("用户协议未勾选");
                 return;
             }
-            else
-            {
-                PlayerPrefs.SetInt("Agreement", 1);
-            }
+
+            PlayerPrefs.SetInt("Agreement", 1);
 
             // 3、判断是否记住账号，是则保存到PlayerPrefs
             if (_toRemeberAcct.isOn)
@@ -87,7 +90,7 @@ namespace UI.Login
 
             // 5、服务器验证，验证成功则跳转到主界面
             Debug.Log("登录成功");
-            UIRoot.Instance.LoginCtrl.ShowWindow(WindowType.GameServerWindow);
+            UIRoot.Instance.LoginViewCtrl.ShowWindow(WindowType.GameServerWindow);
         }
 
         private void OnDestroy()

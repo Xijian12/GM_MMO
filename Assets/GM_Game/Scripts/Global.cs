@@ -1,22 +1,25 @@
-using UnityEngine;
+﻿using UnityEngine;
 using YooAsset;
 
-/**
- * Title:
- * Desciption:
- **/
-public class Global : MonoBehaviour
+namespace GM
 {
-    public static Global Instance { get; private set; }
-    private ResourcePackage _package;
-    public ResourcePackage Yoopackage{get=>_package;}
-
-    private void Awake()
+    /**
+     * Title:
+     * Desciption:
+     **/
+    public class Global : MonoBehaviour
     {
-        Instance = this;
+        public static Global Instance { get; private set; }
+        private ResourcePackage _package;
+        public ResourcePackage YooPackage { get => _package; }
 
-        DontDestroyOnLoad(this);
+        private void Awake()
+        {
+            Instance = this;
 
-        _package = YooAssets.GetPackage("DefaultPackage");
+            DontDestroyOnLoad(this);
+
+            _package = YooAssets.GetPackage("DefaultPackage");
+        }
     }
 }
