@@ -132,3 +132,6 @@ InitTestScene*.unity*
 
 # 学习文档
 /[Dd]ocs/
+
+# 禁止上传插件代码
+/Assets/Plugins/
