@@ -129,3 +129,6 @@ InitTestScene*.unity*
 
 # 任意位置的 bundle 文件（防止误提交）
 *.bundle
+
+# 学习文档
+/[Dd]ocs/
