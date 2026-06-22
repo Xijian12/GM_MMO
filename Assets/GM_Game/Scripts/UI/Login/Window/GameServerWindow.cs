@@ -1,8 +1,7 @@
 ﻿using Common;
-using GM;
+using Manager;
 using UI;
 using UnityEngine;
-using YooAsset;
 
 namespace UI.Login
 {
@@ -36,16 +35,14 @@ namespace UI.Login
         {
             // TODO 服务器请求登录服务器
 
-            // 打开Scene_CreateRole场景
-            Global.Instance.YooPackage.LoadSceneAsync("Assets/GM_Game/Scenes/Scene_CreateRole")
-            .Completed += (SceneOperationHandle handle) =>
+            SceneMgr.Instance.LoadCreateRoleScene(() =>
             {
                 UIRoot.Instance.LoginViewCtrl.HideView();
                 // 1、是否已有角色，是则跳转角色选择界面
 
                 // 2、否则跳转创建角色界面
                 UIRoot.Instance.CreateRoleViewCtrl.ShowWindow(WindowType.CreateRoleWindow);
-            };
+            });
         }
 
         public void OnDestroy()
