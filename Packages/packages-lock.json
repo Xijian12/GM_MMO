@@ -7,6 +7,13 @@
       "dependencies": {},
       "hash": "e4def761d69b27b7b51a5de0f6d272861416a2d6"
     },
+    "com.cysharp.unitask": {
+      "version": "2.5.11",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
+    },
     "com.neuecc.unirx": {
       "version": "7.1.0",
       "depth": 0,
