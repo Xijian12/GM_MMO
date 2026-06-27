@@ -19,7 +19,7 @@ public class Load : MonoBehaviour
     [SerializeField, Header("资源系统地址")] private string _defaultHostServer;
     [SerializeField, Header("备用地址")] private string _fallbackHostServer;
 
-    [SerializeField,Header("热更新界面")] private HotUpdateView _hotUpdateView;
+    [SerializeField, Header("热更新界面")] private HotUpdateView _hotUpdateView;
 
     //获取资源二进制
     private static readonly Dictionary<string, byte[]> s_assetDatas = new Dictionary<string, byte[]>();
@@ -128,7 +128,7 @@ public class Load : MonoBehaviour
         if (downloader.TotalDownloadCount == 0)
         {
             // TODO 这里需要加入到CSV文案表中
-            _hotUpdateView.RefreshUI(1,"没有资源更新，直接进入游戏..");
+            _hotUpdateView.RefreshUI(1, "没有资源更新，直接进入游戏..");
             Debug.Log("没有资源更新，直接进入游戏..");
             yield return InitCode();
             yield break;
@@ -187,14 +187,15 @@ public class Load : MonoBehaviour
         LoadMetadataForAOTAssemblies();
 #if !UNITY_EDITOR
         // Editor环境下，GM_HotFix.dll.bytes已经被自动加载，不需要加载，重复加载反而会出问题。
+        // 加载热更新代码资源后即可自动运行热更新代码。
         Assembly.Load(s_assetDatas["GM_HotFix.dll"] );
 #endif
-
         yield return EnterGame();
     }
 
     /// <summary>
     /// 进入游戏
+    /// 热更逻辑的“启动器”
     /// </summary>
     /// <returns></returns>
     private IEnumerator EnterGame()
@@ -281,23 +282,27 @@ internal class RemoteServices : IRemoteServices
     private readonly string _defaultHostServer;
     private readonly string _fallbackHostServer;
 
+    // 构造函数
     public RemoteServices(string defaultHostServer, string fallbackHostServer)
     {
         _defaultHostServer = NormalizeHost(defaultHostServer);
         _fallbackHostServer = NormalizeHost(fallbackHostServer);
     }
 
+    // 规范化服务器地址
     private static string NormalizeHost(string host)
     {
         return string.IsNullOrEmpty(host) ? host : host.TrimEnd('/');
     }
 
 
+    // 获取备用服务器地址
     public string GetRemoteFallbackURL(string fileName)
     {
         return $"{_fallbackHostServer}/{fileName}";
     }
 
+    // 获取主服务器地址
     public string GetRemoteMainURL(string fileName)
     {
         return $"{_defaultHostServer}/{fileName}";
