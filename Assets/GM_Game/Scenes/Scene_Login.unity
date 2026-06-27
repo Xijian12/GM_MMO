@@ -3078,6 +3078,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 6615680722947611514, guid: 6c02a641c7d8566469898f4c7c29c009, type: 3}
+      propertyPath: m_text
+      value: "\u624B\u673A\u53F7\u7801"
+      objectReference: {fileID: 0}
     - target: {fileID: 7016801733664733264, guid: 6c02a641c7d8566469898f4c7c29c009, type: 3}
       propertyPath: m_Layer
       value: 5

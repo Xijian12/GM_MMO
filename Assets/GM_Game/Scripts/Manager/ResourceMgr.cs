@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using Common;
@@ -38,7 +38,7 @@ namespace Manager
             // 尝试从加载任务中获取已加载的 Prefab Handle
             if (_loadingTasks.TryGetValue(path, out UniTask<AssetOperationHandle> loadingTask))
             {
-                Debug.LogError("使用缓存资源handle：" + path);
+                Debug.Log("使用缓存资源handle：" + path);
                 return await loadingTask.AttachExternalCancellation(cancellationToken);
             }
 
@@ -46,7 +46,7 @@ namespace Manager
             UniTask<AssetOperationHandle> task = LoadPrefabHandleInternalAsync(path);
             _loadingTasks[path] = task;
 
-            Debug.LogError("创建新的加载任务：" + path);
+            Debug.Log("创建新的加载任务：" + path);
 
             try
             {

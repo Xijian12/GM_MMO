@@ -1,4 +1,5 @@
 ﻿using Common;
+using Google.Protobuf;
 using Manager;
 using TMPro;
 using UI;
@@ -67,7 +68,7 @@ namespace UI.Login
             //2、验证账号，手机号码，密码的合法性
 
             //3、判断密码和确认密码是否一致
-            if (_iptPasd.text.Equals(_iptSurePasd.text))
+            if (!_iptPasd.text.Equals(_iptSurePasd.text))
             {
                 TipsMgr.Instance.ShowSystemTips("两次输入的密码不一致...");
                 Debug.Log("两次输入的密码不一致");
@@ -78,6 +79,15 @@ namespace UI.Login
             //TODO
             Debug.Log("注册成功...");
             TipsMgr.Instance.ShowSystemTips("注册成功...");
+
+            RegistReq registReq = new RegistReq()
+            {
+                UserName = _iptAcct.text,
+                PhoneNum = _iptMobile.text,
+                Password = _iptPasd.text,
+            };
+            // 调用客户端对象向服务端发送注册信息
+            NetSocketMgr.Client.SendData(NetDefine.CMD_RegistCode, registReq.ToByteString());
 
             Hide();
         }
