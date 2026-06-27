@@ -33,6 +33,7 @@ namespace Manager
                 return;
             }
 
+            // 从对象池中获取 SystemTips 预制体
             GameObject go = await GameObjectPoolMgr.Instance.SpawnAsync(SystemTipsPath, parent);
             if (go == null)
             {

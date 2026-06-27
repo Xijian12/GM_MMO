@@ -32,6 +32,9 @@ namespace GM
             GameObjectPoolMgr.Instance.Initialize(poolRoot);
             // 启动闲置资源 TTL 扫描（由 Global 在启动时调用）。
             GameObjectPoolMgr.Instance.StartIdleAssetCleanupLoop(_appCts.Token);
+
+            // 初始化网络模块
+            NetSocketMgr.Instance.Init();
         }
 
         private void OnDestroy()
@@ -44,6 +47,14 @@ namespace GM
             _appCts.Cancel();
             _appCts.Dispose();
             _appCts = null;
+        }
+
+        /// <summary>
+        /// 当程序退出的时候，断开与服务端的连接
+        /// </summary>
+        private void OnApplicationQuit()
+        {
+            NetSocketMgr.Instance.DisConnect();
         }
     }
 }

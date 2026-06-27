@@ -2,15 +2,15 @@ using UnityEngine;
 
 namespace Common
 {
-    /**
+	/**
  	* Title:常量定义
  	* Desciption:
  	**/
-    public class ConstDefine
-    {
-        public const string BASE_PATH = "Assets/GM_Game/";
-        public const string PREFAB_PATH = BASE_PATH + "Prefabs/";
+	public class ConstDefine
+	{
+		public const string BASE_PATH = "Assets/GM_Game/";
+		public const string PREFAB_PATH = BASE_PATH + "Prefabs/";
         public const string CREATE_ROLE_SCENE_PATH = BASE_PATH + "Scenes/Scene_CreateRole";
 
-    }
+	}
 }
