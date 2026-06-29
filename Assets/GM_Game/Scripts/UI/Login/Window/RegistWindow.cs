@@ -77,8 +77,6 @@ namespace UI.Login
 
             //4、开始注册
             //TODO
-            Debug.Log("注册成功...");
-            TipsMgr.Instance.ShowSystemTips("注册成功...");
 
             RegistReq registReq = new RegistReq()
             {
@@ -88,8 +86,6 @@ namespace UI.Login
             };
             // 调用客户端对象向服务端发送注册信息
             NetSocketMgr.Client.SendData(NetDefine.CMD_RegistCode, registReq.ToByteString());
-
-            Hide();
         }
 
         /// <summary>

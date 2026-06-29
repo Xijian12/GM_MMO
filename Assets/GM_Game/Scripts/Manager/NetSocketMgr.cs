@@ -31,9 +31,12 @@ namespace Manager
             // 连接之前调用一下断开连接，防止重复连接
             DisConnect();
 
+            // 这里实例化一个Unity类型的客户端
             _client = new NetClient(host, port, ClientType.Unity);
 
             // 当前收到的数据，仍在子线程
+            // 理论上，这里会走NetClient的HandleCommand下的_clientType == ClientType.Unity条件
+            // 从而触发OnReceiveMsg?.Invoke(basePackage.ProtoCode, basePackage.Data);回调
             _client.OnReceiveMsg += OnReceiveMsgHandle;
 
             _client.StartConnect();
@@ -50,6 +53,7 @@ namespace Manager
             // 需要切换到主线程处理数据
             _synchronizationContext.Post(_ =>
             {
+                // 发布对应协议码的事件
                 SocketDispatcher.Instance.DispatcherEvent(protoCode, data);
             }, null);
         }

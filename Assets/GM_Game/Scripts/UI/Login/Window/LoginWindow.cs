@@ -1,4 +1,5 @@
 ﻿using Common;
+using Google.Protobuf;
 using Manager;
 using TMPro;
 using UnityEngine;
@@ -93,11 +94,14 @@ namespace UI.Login
             // 4、保存到PlayerPrefs
             PlayerPrefs.Save();
 
-            // 5、服务器验证，验证成功则跳转到主界面
-            Debug.Log("登录成功");
-            TipsMgr.Instance.ShowSystemTips("登录成功...");
+            LoginReq loginReq = new LoginReq()
+            {
+                UserName = _iptAcct.text,
+                Password = _iptPasd.text,
+            };
 
-            UIRoot.Instance.LoginViewCtrl.ShowWindow(WindowType.GameServerWindow);
+            // 5、向服务器发送登录请求
+            NetSocketMgr.Client.SendData(NetDefine.CMD_LoginCode, loginReq.ToByteString());
         }
 
         private void OnDestroy()
