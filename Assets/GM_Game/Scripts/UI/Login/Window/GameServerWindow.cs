@@ -1,4 +1,5 @@
 ﻿using Common;
+using Google.Protobuf;
 using Manager;
 using UI;
 using UnityEngine;
@@ -25,7 +26,12 @@ namespace UI.Login
         /// </summary>
         public void OnGotoServerListBtnClicked()
         {
-            UIRoot.Instance.LoginViewCtrl.ShowWindow(WindowType.ServerListWindow);
+            GetServerListReq getServerListReq = new GetServerListReq()
+            {
+                ServerId = 0,
+            };
+            // 向服务端发送获取服务器列表请求
+            NetSocketMgr.Client.SendData(NetDefine.CMD_GetServerListCode, getServerListReq.ToByteString());
         }
 
         /// <summary>

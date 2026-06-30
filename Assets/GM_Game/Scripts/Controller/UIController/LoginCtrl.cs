@@ -1,9 +1,11 @@
 ﻿using Common;
+using GM;
 using Google.Protobuf;
 using Manager;
 using System;
 using UI;
 using UnityEngine;
+using YooAsset;
 
 namespace UI.Login
 {
@@ -30,18 +32,43 @@ namespace UI.Login
 
             // 监听登录协议码事件
             SocketDispatcher.Instance.AddEventHandler(NetDefine.CMD_LoginCode, OnLoginHandle);
+
+            // 监听请求服务器列表协议码事件
+            SocketDispatcher.Instance.AddEventHandler(NetDefine.CMD_GetServerListCode, OnGetServerListHandle);
         }
 
         /// <summary>
-        /// 处理客户端返回回来的登录结果
+        /// 处理服务端（登录服务器）返回回来的登录结果
+        /// </summary>
+        /// <param name="data"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void OnGetServerListHandle(ByteString data)
+        {
+            GetServerListRet ret = GetServerListRet.Parser.ParseFrom(data);
+
+            if (ret != null && ret.CmdCode == CmdCode.Succeed)
+            {
+                Debug.Log("获取服务列表成功...");
+                TipsMgr.Instance.ShowSystemTips("请选择服务器...");
+                ShowWindow(WindowType.ServerListWindow, ret);
+            }
+            else
+            {
+                Debug.Log("获取服务列表失败，" + ret.ToString());
+                TipsMgr.Instance.ShowSystemTips("服务列表获取失败...");
+            }
+        }
+
+        /// <summary>
+        /// 处理服务端（登录服务器）返回回来的登录结果
         /// </summary>
         /// <param name="data"></param>
         /// <exception cref="NotImplementedException"></exception>
         private void OnLoginHandle(ByteString data)
         {
-            LoginRet loginRet = LoginRet.Parser.ParseFrom(data);
+            LoginRet ret = LoginRet.Parser.ParseFrom(data);
 
-            if (loginRet != null && loginRet.CmdCode == CmdCode.Succeed)
+            if (ret != null && ret.CmdCode == CmdCode.Succeed)
             {
                 Debug.Log("登录成功...");
                 TipsMgr.Instance.ShowSystemTips("登录成功...");
@@ -49,21 +76,21 @@ namespace UI.Login
             }
             else
             {
-                Debug.Log("登录失败，" + loginRet.ToString());
+                Debug.Log("登录失败，" + ret.ToString());
                 TipsMgr.Instance.ShowSystemTips("登录失败...");
             }
         }
 
         /// <summary>
-        /// 处理服务端返回回来的注册结果
+        /// 处理服务端（登录服务器）返回回来的注册结果
         /// </summary>
         /// <param name="data"></param>
         /// <exception cref="NotImplementedException"></exception>
         private void OnRegistHandle(ByteString data)
         {
-            RegistRet registRet = RegistRet.Parser.ParseFrom(data);
+            RegistRet ret = RegistRet.Parser.ParseFrom(data);
 
-            if (registRet != null && registRet.CmdCode == CmdCode.Succeed)
+            if (ret != null && ret.CmdCode == CmdCode.Succeed)
             {
                 Debug.Log("注册成功...");
                 TipsMgr.Instance.ShowSystemTips("注册成功，请登录...");
@@ -71,7 +98,7 @@ namespace UI.Login
             }
             else
             {
-                Debug.Log("注册失败，" + registRet.ToString());
+                Debug.Log("注册失败，" + ret.ToString());
                 TipsMgr.Instance.ShowSystemTips("注册失败...");
             }
         }

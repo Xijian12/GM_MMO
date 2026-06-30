@@ -36,14 +36,16 @@ namespace Manager
             }
 
             // 尝试从加载任务中获取已加载的 Prefab Handle
+            // 如果正在加载，则返回正在加载的 Task
+            // 正在加载：await 已 Preserve 的同一 UniTask（UniTask 默认不能多次 await）
             if (_loadingTasks.TryGetValue(path, out UniTask<AssetOperationHandle> loadingTask))
             {
                 Debug.Log("使用缓存资源handle：" + path);
                 return await loadingTask.AttachExternalCancellation(cancellationToken);
             }
 
-            // 创建新的加载任务(第一次加载时创建)
-            UniTask<AssetOperationHandle> task = LoadPrefabHandleInternalAsync(path);
+            // 创建新的加载任务；Preserve 允许多个调用方同时等待同一 path
+            UniTask<AssetOperationHandle> task = LoadPrefabHandleInternalAsync(path).Preserve();
             _loadingTasks[path] = task;
 
             Debug.Log("创建新的加载任务：" + path);

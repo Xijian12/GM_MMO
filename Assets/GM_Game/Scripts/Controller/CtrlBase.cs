@@ -31,13 +31,13 @@ namespace UI
 
         }
 
-        public virtual void ShowWindow(WindowType windowType)
+        public virtual void ShowWindow(WindowType windowType, object obj = null)
         {
             if (!_view.gameObject.activeSelf)
             {
                 _view.Show();
             }
-            _view.ShowWindow(windowType);
+            _view.ShowWindow(windowType, obj);
         }
     }
 }

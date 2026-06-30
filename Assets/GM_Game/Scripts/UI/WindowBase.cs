@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace UI
 {
@@ -14,14 +14,24 @@ namespace UI
             // 初始化窗口
         }
 
-        public virtual void Show()
+        public virtual void Show(object obj)
         {
             gameObject.SetActive(true);
+
+            if (obj != null)
+            {
+                RefreshUI(obj);
+            }
         }
 
         public virtual void Hide()
         {
             gameObject.SetActive(false);
+        }
+
+        public virtual void RefreshUI(object obj)
+        {
+
         }
     }
 }

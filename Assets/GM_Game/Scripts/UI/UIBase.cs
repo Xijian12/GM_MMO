@@ -68,7 +68,7 @@ namespace UI
         /// 根据WindowType显示对应的窗口
         /// </summary>
         /// <param name="windowType">窗口类型</param>
-        public void ShowWindow(WindowType windowType)
+        public void ShowWindow(WindowType windowType, object obj = null)
         {
             if (windowDict == null || windowDict.Count == 0)
             {
@@ -79,7 +79,7 @@ namespace UI
             {
                 if (item.Key == windowType)
                 {
-                    item.Value.Show();
+                    item.Value.Show(obj);
                 }
                 else
                 {
