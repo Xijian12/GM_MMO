@@ -17,6 +17,9 @@ namespace GM
 
         public ResourcePackage YooPackage { get => _package; }
 
+        // 登录信息
+        public LoginRet LoginInfo { get; set; }
+
         private void Awake()
         {
             Instance = this;
