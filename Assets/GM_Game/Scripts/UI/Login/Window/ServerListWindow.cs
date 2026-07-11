@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using Common;
 using Cysharp.Threading.Tasks;
+using GM;
 using Google.Protobuf.Collections;
 using Manager;
 using TMPro;
@@ -22,16 +23,19 @@ namespace UI.Login
         [SerializeField, Header("服务器名称")] private TMP_Text _textServerName;
         [SerializeField, Header("服务器列表父节点")] private Transform _itemParentTrans;
         [SerializeField, Header("关闭按钮")] private UGUIBtn _btnClose;
+        [SerializeField, Header("确认选择按钮")] private UGUIBtn _btnConfirm;
 
         private const string ServerListItemPath = "UIPrefabs/ServerListWidgetItem";
 
         private readonly List<GameObject> _spawnedItems = new List<GameObject>(32);
         private CancellationTokenSource _refreshCts;
         private RepeatedField<GameServer> _gameServers;
+        private GameServer _curSelectedServer;
 
         public override void InitView()
         {
-            _btnClose.AddClick(OnCloseBtnClicked);
+            _btnClose.AddSingleClick(OnCloseBtnClicked);
+            _btnConfirm.AddSingleClick(OnConfirmBtnClicked);
         }
 
         /// <summary>
@@ -42,11 +46,22 @@ namespace UI.Login
             RefreshUI(ret);
         }
 
+        /// <summary>
+        /// 刷新服务器列表UI
+        /// </summary>
+        /// <param name="obj"></param>
         public override void RefreshUI(object obj)
         {
+
             if (obj is not GetServerListRet ret || ret.GameServers == null || ret.GameServers.Count == 0)
             {
                 return;
+            }
+
+            // 同步更新登录界面和选择服务器列表的服务器信息
+            if (Global.Instance.LoginInfo != null)
+            {
+                SetServerName(Global.Instance.LoginInfo.GameServer.ServerName);
             }
 
             // 如果存在缓存数据，且缓存数据和新获取的数据一样，则直接返回
@@ -103,6 +118,8 @@ namespace UI.Login
                     if (go.TryGetComponent(out GameServerItem item))
                     {
                         item.RefreshUI(_gameServers[i]);
+                        item.OnServerItemSingleClicked = OnItemClicked;
+                        item.OnServerItemDoubleClicked = OnItemDoubleClicked;
                     }
 
                     _spawnedItems.Add(go);
@@ -112,6 +129,40 @@ namespace UI.Login
             {
             }
         }
+
+        /// <summary>
+        /// 设置当前选择的服务器名称
+        /// </summary>
+        /// <param name="str"></param>
+        private void SetServerName(string str)
+        {
+            _textServerName.SetText(str);
+        }
+
+        /// <summary>
+        /// 当服务器列表Item点击时
+        /// </summary>
+        /// <param name="gameServer"></param>
+        private void OnItemClicked(GameServer gameServer)
+        {
+            _curSelectedServer = gameServer;
+            LoginRet loginRet = Global.Instance.LoginInfo;
+            loginRet.GameServer = gameServer;
+            Global.Instance.LoginInfo = loginRet;
+
+            SetServerName(gameServer.ServerName);
+        }
+
+        /// <summary>
+        /// 当服务器列表Item被双击时
+        /// </summary>
+        /// <param name="gameServer"></param>
+        private void OnItemDoubleClicked(GameServer gameServer)
+        {
+            OnItemClicked(gameServer);
+            UIRoot.Instance.LoginViewCtrl.ShowWindow(WindowType.GameServerWindow, gameServer);
+        }
+
 
         /// <summary>
         /// 销毁当前列表项。
@@ -152,11 +203,22 @@ namespace UI.Login
             UIRoot.Instance.LoginViewCtrl.ShowWindow(WindowType.GameServerWindow);
         }
 
+        /// <summary>
+        /// 确认选择按钮点击事件
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        private void OnConfirmBtnClicked()
+        {
+            UIRoot.Instance.LoginViewCtrl.ShowWindow(WindowType.GameServerWindow, _curSelectedServer);
+        }
+
+
         public void OnDestroy()
         {
             CancelRefresh();
             ClearItems();
-            _btnClose.RemoveClick(OnCloseBtnClicked);
+            _btnClose.RemoveSingleClick(OnCloseBtnClicked);
+            _btnConfirm.RemoveSingleClick(OnConfirmBtnClicked);
         }
     }
 }

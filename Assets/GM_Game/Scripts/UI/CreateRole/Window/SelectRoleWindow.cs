@@ -1,4 +1,4 @@
-using Common;
+﻿using Common;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,8 +13,8 @@ namespace UI.CreateRole
     public class SelectRoleWindow : WindowBase
     {
         [SerializeField, Header("头像图片")] private Image _imgHead;
-        [SerializeField, Header("昵称文本")] private TMP_Text _txtNickName;
-        [SerializeField, Header("职业等级文本")] private TMP_Text _txtJobLevel;
+        [SerializeField, Header("昵称文本")] private TMP_Text _textNickName;
+        [SerializeField, Header("职业等级文本")] private TMP_Text _textJobLevel;
         [SerializeField, Header("开始游戏按钮")] private UGUIBtn _btnStartGame;
 
         /// <summary>
@@ -22,7 +22,28 @@ namespace UI.CreateRole
         /// </summary>
         public override void InitView()
         {
-            _btnStartGame.AddClick(OnStartGameBtnClicked);
+            _btnStartGame.AddSingleClick(OnStartGameBtnClicked);
+        }
+
+        public override void RefreshUI(object obj)
+        {
+            CreateRoleRet createRoleRet = obj as CreateRoleRet;
+            if (createRoleRet != null)
+            {
+                _textNickName.SetText(createRoleRet.Nickname);
+                // TODO 这里需要读表
+                string jobStr = "";
+
+                switch (createRoleRet.JobId)
+                {
+                    case 1:
+                        jobStr = "剑修";
+                        break;
+                    default:
+                        break;
+                }
+                _textJobLevel.SetText($"职业:{jobStr} Lv:{createRoleRet.Level}");
+            }
         }
 
         /// <summary>
@@ -36,7 +57,7 @@ namespace UI.CreateRole
 
         private void OnDestroy()
         {
-            _btnStartGame.RemoveClick(OnStartGameBtnClicked);
+            _btnStartGame.RemoveSingleClick(OnStartGameBtnClicked);
         }
     }
 }

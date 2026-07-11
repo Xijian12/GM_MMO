@@ -35,10 +35,50 @@ namespace UI.Login
 
             // 监听请求服务器列表协议码事件
             SocketDispatcher.Instance.AddEventHandler(NetDefine.CMD_GetServerListCode, OnGetServerListHandle);
+
+            // 监听请求登录游戏服务器协议码事件
+            SocketDispatcher.Instance.AddEventHandler(NetDefine.CMD_LoginGameServerCode, OnLoginGameServerHandle);
         }
 
         /// <summary>
-        /// 处理服务端（登录服务器）返回回来的登录结果
+        /// 处理服务端（登录服务器）返回回来的请求登录游戏服务器结果
+        /// </summary>
+        /// <param name="data"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void OnLoginGameServerHandle(ByteString data)
+        {
+            LoginGameServerRet ret = LoginGameServerRet.Parser.ParseFrom(data);
+
+            if (ret != null && ret.CmdCode == CmdCode.Succeed)
+            {
+                Debug.Log("请求登录游戏服务器成功...");
+
+                SceneMgr.Instance.LoadCreateRoleScene(() =>
+                {
+                    UIRoot.Instance.LoginViewCtrl.HideView();
+                    // 1、是否已有角色，是则
+                    // 跳转角色选择界面
+                    if (ret.CreateRoleInfo != null)
+                    {
+                        UIRoot.Instance.CreateRoleViewCtrl.ShowWindow(WindowType.SelectRoleWindow, ret.CreateRoleInfo);
+                    }
+                    // 2、否则跳转创建角色界面
+                    else
+                    {
+                        UIRoot.Instance.CreateRoleViewCtrl.ShowWindow(WindowType.CreateRoleWindow);
+                    }
+                });
+                TipsMgr.Instance.ShowSystemTips("登录服务器成功...");
+            }
+            else
+            {
+                Debug.Log("请求登录游戏服务器失败，" + ret.ToString());
+                TipsMgr.Instance.ShowSystemTips("登录服务器失败...");
+            }
+        }
+
+        /// <summary>
+        /// 处理服务端（登录服务器）返回回来的获取服务列表结果
         /// </summary>
         /// <param name="data"></param>
         /// <exception cref="NotImplementedException"></exception>
@@ -70,9 +110,11 @@ namespace UI.Login
 
             if (ret != null && ret.CmdCode == CmdCode.Succeed)
             {
-                Debug.Log("登录成功...");
+                Debug.Log("登录成功..." + ret.ToString());
                 TipsMgr.Instance.ShowSystemTips("登录成功...");
-                ShowWindow(WindowType.GameServerWindow);
+
+                Global.Instance.LoginInfo = ret;
+                ShowWindow(WindowType.GameServerWindow, ret.GameServer);
             }
             else
             {

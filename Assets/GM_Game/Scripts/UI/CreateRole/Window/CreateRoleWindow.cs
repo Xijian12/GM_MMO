@@ -1,4 +1,7 @@
-using Common;
+﻿using Common;
+using GM;
+using Google.Protobuf;
+using Manager;
 using TMPro;
 using UI;
 using UnityEngine;
@@ -18,21 +21,33 @@ namespace UI.CreateRole
         public override void InitView()
         {
             base.InitView();
-            _btnCreateRole.AddClick(OnCreateRoleBtnClick);
+            _btnCreateRole.AddSingleClick(OnCreateRoleBtnClick);
         }
 
         public void OnCreateRoleBtnClick()
         {
             // 判断输入框是否为空
-            // 验证昵称是否合法
+            if (string.IsNullOrEmpty(_iptNickName.text))
+            {
+                TipsMgr.Instance.ShowSystemTips("请输入昵称...");
+            }
+            // TODO 验证昵称是否合法
+
             // 服务器验证，是否创建成功
-            // 跳转选择角色界面
-            UIRoot.Instance.CreateRoleViewCtrl.ShowWindow(WindowType.SelectRoleWindow);
+            CreateRoleReq createRoleReq = new CreateRoleReq()
+            {
+                AccountId = Global.Instance.LoginInfo.AccountId,
+                GameServerId = Global.Instance.LoginInfo.GameServer.ServerId,
+                Nickname = _iptNickName.text,
+                // TODO 这里的职业类型考虑后续拓展，需要配表
+                JobId = 1,
+            };
+            NetSocketMgr.Client.SendData(NetDefine.CMD_CreateRoleCode, createRoleReq.ToByteString());
         }
 
         public void OnDestroy()
         {
-            _btnCreateRole.RemoveClick(OnCreateRoleBtnClick);
+            _btnCreateRole.RemoveSingleClick(OnCreateRoleBtnClick);
         }
     }
 }
