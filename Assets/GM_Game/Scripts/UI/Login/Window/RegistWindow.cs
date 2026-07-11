@@ -24,9 +24,9 @@ namespace UI.Login
 
         public override void InitView()
         {
-            _btnRegist.AddClick(OnRegistBtnClicked);
-            _btnGetVerify.AddClick(OnVerifyCodeBtnClicked);
-            _btnBackLogin.AddClick(OnBackLoginBtnClicked);
+            _btnRegist.AddSingleClick(OnRegistBtnClicked);
+            _btnGetVerify.AddSingleClick(OnVerifyCodeBtnClicked);
+            _btnBackLogin.AddSingleClick(OnBackLoginBtnClicked);
         }
 
         /// <summary>
@@ -107,9 +107,9 @@ namespace UI.Login
 
         private void OnDestroy()
         {
-            _btnRegist.RemoveClick(OnRegistBtnClicked);
-            _btnGetVerify.RemoveClick(OnVerifyCodeBtnClicked);
-            _btnBackLogin.RemoveClick(OnBackLoginBtnClicked);
+            _btnRegist.RemoveSingleClick(OnRegistBtnClicked);
+            _btnGetVerify.RemoveSingleClick(OnVerifyCodeBtnClicked);
+            _btnBackLogin.RemoveSingleClick(OnBackLoginBtnClicked);
         }
     }
 }

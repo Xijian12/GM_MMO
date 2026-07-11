@@ -40,8 +40,8 @@ namespace UI.Login
 
         public override void InitView()
         {
-            _btnLogin.AddClick(OnLoginBtnClicked);
-            _btnGotoRegist.AddClick(OnGotoRegistBtnClicked);
+            _btnLogin.AddSingleClick(OnLoginBtnClicked);
+            _btnGotoRegist.AddSingleClick(OnGotoRegistBtnClicked);
         }
 
         /// <summary>
@@ -106,8 +106,8 @@ namespace UI.Login
 
         private void OnDestroy()
         {
-            _btnLogin.RemoveClick(OnLoginBtnClicked);
-            _btnGotoRegist.RemoveClick(OnGotoRegistBtnClicked);
+            _btnLogin.RemoveSingleClick(OnLoginBtnClicked);
+            _btnGotoRegist.RemoveSingleClick(OnGotoRegistBtnClicked);
         }
     }
 }
