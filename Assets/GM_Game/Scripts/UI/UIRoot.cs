@@ -82,5 +82,14 @@ namespace UI
             }
             return Vector2.zero;
         }
+
+        /// <summary>
+        /// 当UI销毁时，需要调用Ctrl的销毁方法
+        /// </summary>
+        private void OnDestroy()
+        {
+            LoginViewCtrl.Dispose();
+            CreateRoleViewCtrl.Dispose();
+        }
     }
 }

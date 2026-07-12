@@ -4,8 +4,8 @@ using Google.Protobuf;
 using Manager;
 using System;
 using UI;
+using UI.Login.Data;
 using UnityEngine;
-using YooAsset;
 
 namespace UI.Login
 {
@@ -38,6 +38,74 @@ namespace UI.Login
 
             // 监听请求登录游戏服务器协议码事件
             SocketDispatcher.Instance.AddEventHandler(NetDefine.CMD_LoginGameServerCode, OnLoginGameServerHandle);
+
+            /*--- 注册点击事件--- */
+            // 注册登录游戏服务器事件
+            _loginView.RegisterGameServerBtnClicked(OnGameServerBtnClicked);
+            _loginView.RegisterGotoServerListBtnClicked(OnGotoServerListBtnClicked);
+
+            _loginView.RegisterLoginSubmit(OnLoginSubmit);
+            _loginView.RegisterRegistSubmit(OnRegistSubmit);
+        }
+
+        /// <summary>
+        /// 登录表单提交
+        /// </summary>
+        private void OnLoginSubmit(LoginFormData form)
+        {
+            LoginReq loginReq = new LoginReq()
+            {
+                UserName = form.UserName,
+                Password = form.Password,
+            };
+
+            NetSocketMgr.Client.SendData(NetDefine.CMD_LoginCode, loginReq.ToByteString());
+        }
+
+        /// <summary>
+        /// 注册表单提交
+        /// </summary>
+        private void OnRegistSubmit(RegistFormData form)
+        {
+            RegistReq registReq = new RegistReq()
+            {
+                UserName = form.UserName,
+                PhoneNum = form.PhoneNum,
+                Password = form.Password,
+            };
+
+            NetSocketMgr.Client.SendData(NetDefine.CMD_RegistCode, registReq.ToByteString());
+        }
+
+        /// <summary>
+        /// 点击跳转服务器列表事件
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        private void OnGotoServerListBtnClicked()
+        {
+            GetServerListReq getServerListReq = new GetServerListReq()
+            {
+                ServerId = 0,
+            };
+            // 向服务端发送获取服务器列表请求
+            NetSocketMgr.Client.SendData(NetDefine.CMD_GetServerListCode, getServerListReq.ToByteString());
+        }
+
+        /// <summary>
+        /// 点击服务器登录事件
+        /// </summary>
+        /// <param name="server"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void OnGameServerBtnClicked(GameServer server)
+        {
+            LoginGameServerReq req = new LoginGameServerReq()
+            {
+                AccountId = Global.Instance.LoginInfo.AccountId,
+                GameServerId = server.ServerId
+            };
+
+            // 服务器请求登录服务器
+            NetSocketMgr.Client.SendData(NetDefine.CMD_LoginGameServerCode, req.ToByteString());
         }
 
         /// <summary>
@@ -143,6 +211,21 @@ namespace UI.Login
                 Debug.Log("注册失败，" + ret.ToString());
                 TipsMgr.Instance.ShowSystemTips("注册失败...");
             }
+        }
+
+        public override void Dispose()
+        {
+            _loginView.UnRegisterGameServerBtnClicked(OnGameServerBtnClicked);
+            _loginView.UnRegisterGotoServerListBtnClicked(OnGotoServerListBtnClicked);
+            _loginView.UnregisterLoginSubmit(OnLoginSubmit);
+            _loginView.UnregisterRegistSubmit(OnRegistSubmit);
+
+            SocketDispatcher.Instance.RemoveEventHandler(NetDefine.CMD_RegistCode);
+            SocketDispatcher.Instance.RemoveEventHandler(NetDefine.CMD_LoginCode);
+            SocketDispatcher.Instance.RemoveEventHandler(NetDefine.CMD_GetServerListCode);
+            SocketDispatcher.Instance.RemoveEventHandler(NetDefine.CMD_LoginGameServerCode);
+
+            base.Dispose();
         }
     }
 }

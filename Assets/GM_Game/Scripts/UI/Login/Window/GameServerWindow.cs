@@ -2,6 +2,7 @@
 using GM;
 using Google.Protobuf;
 using Manager;
+using System;
 using TMPro;
 using UI;
 using UnityEngine;
@@ -19,6 +20,10 @@ namespace UI.Login
         [SerializeField, Header("服务器名称")] private TMP_Text _textServerName;
         [SerializeField, Header("服务器运行状态名称")] private TMP_Text _textRunStateName;
         private GameServer _gameServer;
+
+        // 使用Action将UI层和Model层分离
+        public event Action<GameServer> GameServerBtnClickAction;
+        public event Action GotoServerListBtnClickAction;
 
         public override void InitView()
         {
@@ -71,17 +76,14 @@ namespace UI.Login
             _textServerName.SetText(_gameServer.ServerName + str);
         }
 
+
         /// <summary>
         /// 跳转服务器列表按钮点击事件
         /// </summary>
         public void OnGotoServerListBtnClicked()
         {
-            GetServerListReq getServerListReq = new GetServerListReq()
-            {
-                ServerId = 0,
-            };
-            // 向服务端发送获取服务器列表请求
-            NetSocketMgr.Client.SendData(NetDefine.CMD_GetServerListCode, getServerListReq.ToByteString());
+            // 回调跳转服务器列表按钮点击事件
+            GotoServerListBtnClickAction?.Invoke();
         }
 
         /// <summary>
@@ -89,14 +91,8 @@ namespace UI.Login
         /// </summary>
         public void OnGameServerBtnClicked()
         {
-            LoginGameServerReq req = new LoginGameServerReq()
-            {
-                AccountId = Global.Instance.LoginInfo.AccountId,
-                GameServerId = _gameServer.ServerId
-            };
-
-            // 服务器请求登录服务器
-            NetSocketMgr.Client.SendData(NetDefine.CMD_LoginGameServerCode, req.ToByteString());
+            // UI只负责调用Action，Action的具体内容写在Ctrl里面
+            GameServerBtnClickAction?.Invoke(_gameServer);
         }
 
         public void OnDestroy()

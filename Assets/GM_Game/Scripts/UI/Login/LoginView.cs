@@ -1,4 +1,6 @@
 ﻿using Common;
+using System;
+using UI.Login.Data;
 using UnityEngine;
 
 namespace UI.Login
@@ -32,6 +34,73 @@ namespace UI.Login
         protected override void OnWindowsInited()
         {
             ShowWindow(WindowType.LoginWindow);
+        }
+
+        /// <summary>
+        /// 注册登录游戏服务器事件
+        /// </summary>
+        /// <param name="action"></param>
+        public void RegisterGameServerBtnClicked(Action<GameServer> action)
+        {
+            _gameServerWindow.GameServerBtnClickAction += action;
+        }
+
+        /// <summary>
+        /// 取消注册登录游戏服务器事件
+        /// </summary>
+        /// <param name="action"></param>
+        public void UnRegisterGameServerBtnClicked(Action<GameServer> action)
+        {
+            _gameServerWindow.GameServerBtnClickAction -= action;
+        }
+
+        /// <summary>
+        /// 注册请求游戏服务器列表事件
+        /// </summary>
+        /// <param name="action"></param>
+        public void RegisterGotoServerListBtnClicked(Action action)
+        {
+            _gameServerWindow.GotoServerListBtnClickAction += action;
+        }
+
+        /// <summary>
+        /// 取消请求游戏服务器列表事件
+        /// </summary>
+        /// <param name="action"></param>
+        public void UnRegisterGotoServerListBtnClicked(Action action)
+        {
+            _gameServerWindow.GotoServerListBtnClickAction -= action;
+        }
+        /// <summary>
+        /// 注册登录提交事件
+        /// </summary>
+        public void RegisterLoginSubmit(Action<LoginFormData> action)
+        {
+            _loginWindow.OnLoginSubmit += action;
+        }
+
+        /// <summary>
+        /// 取消注册登录提交事件
+        /// </summary>
+        public void UnregisterLoginSubmit(Action<LoginFormData> action)
+        {
+            _loginWindow.OnLoginSubmit -= action;
+        }
+
+        /// <summary>
+        /// 注册提交事件
+        /// </summary>
+        public void RegisterRegistSubmit(Action<RegistFormData> action)
+        {
+            _registWindow.OnRegistSubmit += action;
+        }
+
+        /// <summary>
+        /// 取消注册提交事件
+        /// </summary>
+        public void UnregisterRegistSubmit(Action<RegistFormData> action)
+        {
+            _registWindow.OnRegistSubmit -= action;
         }
     }
 }

@@ -1,9 +1,8 @@
 ﻿using Common;
-using GM;
-using Google.Protobuf;
 using Manager;
+using System;
 using TMPro;
-using UI;
+using UI.CreateRole.Data;
 using UnityEngine;
 
 namespace UI.CreateRole
@@ -18,6 +17,10 @@ namespace UI.CreateRole
 
         [SerializeField, Header("创建角色按钮")] private UGUIBtn _btnCreateRole;
 
+        private const int DefaultJobId = 1;
+
+        public Action<CreateRoleFormData> OnCreateRoleSubmit;
+
         public override void InitView()
         {
             base.InitView();
@@ -30,19 +33,11 @@ namespace UI.CreateRole
             if (string.IsNullOrEmpty(_iptNickName.text))
             {
                 TipsMgr.Instance.ShowSystemTips("请输入昵称...");
+                return;
             }
             // TODO 验证昵称是否合法
 
-            // 服务器验证，是否创建成功
-            CreateRoleReq createRoleReq = new CreateRoleReq()
-            {
-                AccountId = Global.Instance.LoginInfo.AccountId,
-                GameServerId = Global.Instance.LoginInfo.GameServer.ServerId,
-                Nickname = _iptNickName.text,
-                // TODO 这里的职业类型考虑后续拓展，需要配表
-                JobId = 1,
-            };
-            NetSocketMgr.Client.SendData(NetDefine.CMD_CreateRoleCode, createRoleReq.ToByteString());
+            OnCreateRoleSubmit?.Invoke(new CreateRoleFormData(_iptNickName.text, DefaultJobId));
         }
 
         public void OnDestroy()

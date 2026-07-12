@@ -1,7 +1,10 @@
 ﻿using Common;
+using GM;
 using Google.Protobuf;
 using Manager;
+using System;
 using UI;
+using UI.CreateRole.Data;
 using UnityEngine;
 
 namespace UI.CreateRole
@@ -26,6 +29,24 @@ namespace UI.CreateRole
         {
             // 监听请求登录游戏服务器协议码事件
             SocketDispatcher.Instance.AddEventHandler(NetDefine.CMD_CreateRoleCode, OnCreateRoleHandle);
+
+            /*--- 注册点击事件 ---*/
+            _createRoleView.RegisterCreateRoleSubmit(OnCreateRoleSubmit);
+        }
+
+        /// <summary>
+        /// 创建角色表单提交
+        /// </summary>
+        private void OnCreateRoleSubmit(CreateRoleFormData form)
+        {
+            CreateRoleReq createRoleReq = new CreateRoleReq()
+            {
+                AccountId = Global.Instance.LoginInfo.AccountId,
+                GameServerId = Global.Instance.LoginInfo.GameServer.ServerId,
+                Nickname = form.Nickname,
+                JobId = form.JobId,
+            };
+            NetSocketMgr.Client.SendData(NetDefine.CMD_CreateRoleCode, createRoleReq.ToByteString());
         }
 
         /// <summary>
@@ -47,6 +68,16 @@ namespace UI.CreateRole
                 TipsMgr.Instance.ShowSystemTips("请求创建角色失败...");
             }
 
+        }
+
+        /// <summary>
+        /// 重写销毁事件
+        /// </summary>
+        public override void Dispose()
+        {
+            SocketDispatcher.Instance.RemoveEventHandler(NetDefine.CMD_CreateRoleCode);
+
+            _createRoleView.UnregisterCreateRoleSubmit(OnCreateRoleSubmit);
         }
     }
 }

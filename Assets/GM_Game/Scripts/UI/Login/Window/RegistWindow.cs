@@ -1,8 +1,8 @@
 ﻿using Common;
-using Google.Protobuf;
 using Manager;
+using System;
 using TMPro;
-using UI;
+using UI.Login.Data;
 using UnityEngine;
 
 namespace UI.Login
@@ -21,6 +21,8 @@ namespace UI.Login
         [SerializeField, Header("注册按钮")] private UGUIBtn _btnRegist;
         [SerializeField, Header("获取验证码按钮")] private UGUIBtn _btnGetVerify;
         [SerializeField, Header("返回登录按钮")] private UGUIBtn _btnBackLogin;
+
+        public Action<RegistFormData> OnRegistSubmit;
 
         public override void InitView()
         {
@@ -75,17 +77,11 @@ namespace UI.Login
                 return;
             }
 
-            //4、开始注册
-            //TODO
-
-            RegistReq registReq = new RegistReq()
-            {
-                UserName = _iptAcct.text,
-                PhoneNum = _iptMobile.text,
-                Password = _iptPasd.text,
-            };
-            // 调用客户端对象向服务端发送注册信息
-            NetSocketMgr.Client.SendData(NetDefine.CMD_RegistCode, registReq.ToByteString());
+            OnRegistSubmit?.Invoke(new RegistFormData(
+                _iptAcct.text,
+                _iptMobile.text,
+                _iptPasd.text,
+                _iptVerify.text));
         }
 
         /// <summary>

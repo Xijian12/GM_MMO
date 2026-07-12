@@ -1,7 +1,8 @@
 ﻿using Common;
-using Google.Protobuf;
 using Manager;
+using System;
 using TMPro;
+using UI.Login.Data;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,6 +21,8 @@ namespace UI.Login
 
         [SerializeField, Header("登录按钮")] private UGUIBtn _btnLogin;
         [SerializeField, Header("跳转注册按钮")] private UGUIBtn _btnGotoRegist;
+
+        public Action<LoginFormData> OnLoginSubmit;
 
         private void Awake()
         {
@@ -94,14 +97,7 @@ namespace UI.Login
             // 4、保存到PlayerPrefs
             PlayerPrefs.Save();
 
-            LoginReq loginReq = new LoginReq()
-            {
-                UserName = _iptAcct.text,
-                Password = _iptPasd.text,
-            };
-
-            // 5、向服务器发送登录请求
-            NetSocketMgr.Client.SendData(NetDefine.CMD_LoginCode, loginReq.ToByteString());
+            OnLoginSubmit?.Invoke(new LoginFormData(_iptAcct.text, _iptPasd.text));
         }
 
         private void OnDestroy()

@@ -24,6 +24,9 @@ namespace Manager
         {
             _synchronizationContext = SynchronizationContext.Current;
             ConnectServer(NetDefine.IPHost, NetDefine.LoginServerPort);
+
+            // 服务器连接成功后，初始化服务端错误处理管理类
+            NetErrorMsgMgr.Instance.Init();
         }
 
         public void ConnectServer(string host, int port)

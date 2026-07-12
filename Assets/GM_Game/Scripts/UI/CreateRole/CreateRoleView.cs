@@ -1,5 +1,7 @@
 ﻿using Common;
+using System;
 using UI;
+using UI.CreateRole.Data;
 using UnityEngine;
 
 namespace UI.CreateRole
@@ -28,6 +30,23 @@ namespace UI.CreateRole
         protected override void OnWindowsInited()
         {
             ShowWindow(WindowType.CreateRoleWindow);
+        }
+
+        /// <summary>
+        /// 注册创建角色事件
+        /// </summary>
+        /// <param name="action"></param>
+        public void RegisterCreateRoleSubmit(Action<CreateRoleFormData> action)
+        {
+            _createRoleWindow.OnCreateRoleSubmit += action;
+        }
+
+        /// <summary>
+        /// 取消注册创建角色提交事件
+        /// </summary>
+        public void UnregisterCreateRoleSubmit(Action<CreateRoleFormData> action)
+        {
+            _createRoleWindow.OnCreateRoleSubmit -= action;
         }
     }
 }
