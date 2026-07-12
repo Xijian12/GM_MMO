@@ -36,21 +36,10 @@ namespace UI.CreateRole
         private void OnCreateRoleHandle(ByteString data)
         {
             CreateRoleRet ret = CreateRoleRet.Parser.ParseFrom(data);
-            if (ret != null)
+            if (ret != null && ret.CmdCode == CmdCode.Succeed)
             {
-                switch (ret.CmdCode)
-                {
-                    case CmdCode.Succeed:
-                        Debug.Log("创建角色成功：" + ret.ToString());
-                        ShowWindow(WindowType.SelectRoleWindow, ret);
-                        break;
-                    case CmdCode.NicknameExist:
-                        Debug.Log("角色昵称重复，" + ret.ToString());
-                        TipsMgr.Instance.ShowSystemTips("角色昵称重复...");
-                        break;
-                    default:
-                        break;
-                }
+                Debug.Log("创建角色成功：" + ret.ToString());
+                ShowWindow(WindowType.SelectRoleWindow, ret);
             }
             else
             {
