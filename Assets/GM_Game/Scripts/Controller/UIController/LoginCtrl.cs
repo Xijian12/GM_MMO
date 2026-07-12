@@ -138,11 +138,6 @@ namespace UI.Login
                 });
                 TipsMgr.Instance.ShowSystemTips("登录服务器成功...");
             }
-            else
-            {
-                Debug.Log("请求登录游戏服务器失败，" + ret.ToString());
-                TipsMgr.Instance.ShowSystemTips("登录服务器失败...");
-            }
         }
 
         /// <summary>
@@ -159,11 +154,6 @@ namespace UI.Login
                 Debug.Log("获取服务列表成功...");
                 TipsMgr.Instance.ShowSystemTips("请选择服务器...");
                 ShowWindow(WindowType.ServerListWindow, ret);
-            }
-            else
-            {
-                Debug.Log("获取服务列表失败，" + ret.ToString());
-                TipsMgr.Instance.ShowSystemTips("服务列表获取失败...");
             }
         }
 
@@ -184,11 +174,6 @@ namespace UI.Login
                 Global.Instance.LoginInfo = ret;
                 ShowWindow(WindowType.GameServerWindow, ret.GameServer);
             }
-            else
-            {
-                Debug.Log("登录失败，" + ret.ToString());
-                TipsMgr.Instance.ShowSystemTips("登录失败...");
-            }
         }
 
         /// <summary>
@@ -205,11 +190,6 @@ namespace UI.Login
                 Debug.Log("注册成功...");
                 TipsMgr.Instance.ShowSystemTips("注册成功，请登录...");
                 ShowWindow(WindowType.LoginWindow);
-            }
-            else
-            {
-                Debug.Log("注册失败，" + ret.ToString());
-                TipsMgr.Instance.ShowSystemTips("注册失败...");
             }
         }
 
