@@ -71,6 +71,7 @@ namespace UI.Login
         {
             _gameServerWindow.GotoServerListBtnClickAction -= action;
         }
+
         /// <summary>
         /// 注册登录提交事件
         /// </summary>

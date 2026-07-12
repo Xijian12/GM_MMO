@@ -88,8 +88,8 @@ namespace UI
         /// </summary>
         private void OnDestroy()
         {
-            LoginViewCtrl.Dispose();
-            CreateRoleViewCtrl.Dispose();
+            LoginViewCtrl?.Dispose();
+            CreateRoleViewCtrl?.Dispose();
         }
     }
 }
