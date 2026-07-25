@@ -1,4 +1,5 @@
-using Controller.InputController;
+﻿using Controller.InputController;
+using System;
 using UnityEngine;
 
 namespace Controller.RoleController
@@ -10,16 +11,44 @@ namespace Controller.RoleController
     public class MainRoleCtrl : RoleCtrlBase
     {
         private PlayerInputCtrl _playerInputCtrl;
-        private readonly float _moveSpeed = 10f;
+        private float _moveSpeed = 10f;    // 角色的移动速度
 
         private readonly float _rotateSpeed = 1000f;
 
         protected override void OnAwake()
         {
             _playerInputCtrl = GetComponent<PlayerInputCtrl>();
+
+            _playerInputCtrl.ShiftKeyIsPressEvenet += ShiftKeyIsPress;
+        }
+
+        /// <summary>
+        /// Shift键是否按下，如果按下，角色就可以快速跑
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void ShiftKeyIsPress(bool isPress)
+        {
+            if (isPress)
+            {
+                _moveSpeed = 18;
+            }
+            else
+            {
+                _moveSpeed = 10;
+            }
         }
 
         private void Update()
+        {
+            PlayerMovement();
+        }
+
+        /// <summary>
+        /// 角色移动
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        private void PlayerMovement()
         {
             // 角色移动键是否按下
             if (_playerInputCtrl.Movement != Vector2.zero)
@@ -29,7 +58,14 @@ namespace Controller.RoleController
                 targetPos = targetPos * Time.deltaTime * _moveSpeed;
 
                 // 角色开始移动
-                _animator.SetFloat("Movement", 2);
+                if (_moveSpeed == 10)
+                {
+                    _animator.SetFloat("Movement", 2);
+                }
+                else if (_moveSpeed == 18)
+                {
+                    _animator.SetFloat("Movement", 3);
+                }
 
                 // 从本地坐标系转换为世界坐标系
                 targetPos = Camera.main.transform.TransformDirection(targetPos);
