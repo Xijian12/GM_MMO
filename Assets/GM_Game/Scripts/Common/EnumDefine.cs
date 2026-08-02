@@ -1,4 +1,4 @@
-namespace Common
+﻿namespace Common
 {
     /// <summary>
     /// 窗口类型
@@ -11,5 +11,14 @@ namespace Common
         ServerListWindow, // 服务器列表窗口
         CreateRoleWindow, // 创建角色窗口
         SelectRoleWindow, // 选择角色窗口
+    }
+
+    public enum RoleState
+    {
+        None,
+        Idle,
+        Run,
+        FastRun,
+        Jump
     }
 }

@@ -1,4 +1,6 @@
-﻿using Controller.InputController;
+﻿using Common;
+using Controller.InputController;
+using Manager;
 using System;
 using UnityEngine;
 
@@ -10,16 +12,46 @@ namespace Controller.RoleController
  	**/
     public class MainRoleCtrl : RoleCtrlBase
     {
+        private readonly float StartJumpSencond = 0.26f;
         private PlayerInputCtrl _playerInputCtrl;
         private float _moveSpeed = 10f;    // 角色的移动速度
 
         private readonly float _rotateSpeed = 1000f;
+
+        private TimerHandle _lifeTimer = TimerHandle.Invalid;
+
 
         protected override void OnAwake()
         {
             _playerInputCtrl = GetComponent<PlayerInputCtrl>();
 
             _playerInputCtrl.ShiftKeyIsPressEvenet += ShiftKeyIsPress;
+            _playerInputCtrl.JumpingEvenet += Jumping;
+        }
+
+        /// <summary>
+        /// 跳跃键是否按下，如果按下就可以跳跃
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        private void Jumping()
+        {
+            if (_roleState == RoleState.Jump)
+            {
+                return;
+            }
+            if (_lifeTimer.IsValid)
+            {
+                _lifeTimer.Cancel();
+            }
+
+            _lifeTimer = TimerMgr.Instance.Delay(
+                StartJumpSencond,
+                () => { _verticalHeigth += 8; },
+                TimerType.GameTime,
+                this,
+                nameof(Jumping));
+
+            ChangeState(RoleState.Jump);
         }
 
         /// <summary>
@@ -39,7 +71,7 @@ namespace Controller.RoleController
             }
         }
 
-        private void Update()
+        protected override void OnUpdate()
         {
             PlayerMovement();
         }
@@ -84,6 +116,29 @@ namespace Controller.RoleController
                 // 角色停止移动
                 _animator.SetFloat("Movement", 0);
             }
+        }
+
+        /// <summary>
+        /// 对象销毁时释放
+        /// </summary>
+        protected override void OnDespawn()
+        {
+            base.OnDespawn();
+            CancelLifeTimer();
+        }
+
+        /// <summary>
+        /// 取消生命周期定时器。
+        /// </summary>
+        private void CancelLifeTimer()
+        {
+            if (!_lifeTimer.IsValid)
+            {
+                return;
+            }
+
+            _lifeTimer.Cancel();
+            _lifeTimer = TimerHandle.Invalid;
         }
     }
 }

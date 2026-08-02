@@ -36,6 +36,11 @@ namespace GM
             // 启动闲置资源 TTL 扫描（由 Global 在启动时调用）。
             GameObjectPoolMgr.Instance.StartIdleAssetCleanupLoop(_appCts.Token);
 
+            // 初始化定时器管理器（挂在 Global 下，随 DontDestroyOnLoad 跨场景存活）
+            Transform timerRoot = new GameObject("TimerRoot").transform;
+            timerRoot.SetParent(transform, false);
+            TimerMgr.Instance.Initialize(timerRoot);
+
             // 初始化网络模块
             NetSocketMgr.Instance.Init();
         }

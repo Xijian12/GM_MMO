@@ -2,5 +2,8 @@
     "omnisharp.enableEditorConfigSupport": true,
     "omnisharp.enableRoslynAnalyzers": true,
     "git.ignoreLimitWarning": true,
-    "dotnet.defaultSolution": "disable"
+    "dotnet.defaultSolution": "disable",
+    "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": [
+        "GM_MMO.sln"
+    ]
 }

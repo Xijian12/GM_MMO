@@ -14,6 +14,8 @@ namespace Controller.InputController
 
         public Action<bool> ShiftKeyIsPressEvenet;
 
+        public Action JumpingEvenet;
+
         public Vector2 Movement => _input.Player.Movement.ReadValue<Vector2>();
         public bool Jump => _input.Player.Jump.WasPressedThisFrame();
 
@@ -40,6 +42,12 @@ namespace Controller.InputController
             {
                 ShiftKeyIsPressEvenet?.Invoke(false);
 
+            };
+
+            // Jump键按下时的回调
+            _input.Player.Jump.started += (InputAction.CallbackContext ctx) =>
+            {
+                JumpingEvenet?.Invoke();
             };
         }
 

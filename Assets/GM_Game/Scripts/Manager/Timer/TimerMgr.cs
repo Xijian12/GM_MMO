@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -44,23 +44,41 @@ namespace Manager
 
         /// <summary>
         /// 由 Global 在启动时注入父节点并创建驱动器。
+        /// parent 为空时会自建 DontDestroyOnLoad 根节点（便于单独跑主城场景调试）。
         /// </summary>
-        public void Initialize(Transform parent)
+        public void Initialize(Transform parent = null)
         {
-            if (_initialized)
+            // 驱动器已被场景卸载销毁时，需要重建
+            if (_initialized && _driver != null)
             {
                 return;
             }
 
-            if (parent == null)
+            Transform root = parent;
+            if (root == null)
             {
-                throw new ArgumentNullException(nameof(parent));
+                GameObject rootGo = new GameObject("TimerRoot");
+                UnityEngine.Object.DontDestroyOnLoad(rootGo);
+                root = rootGo.transform;
             }
 
             GameObject driverGo = new GameObject("TimerDriver");
-            driverGo.transform.SetParent(parent, false);
+            driverGo.transform.SetParent(root, false);
             _driver = driverGo.AddComponent<TimerDriver>();
             _initialized = true;
+        }
+
+        /// <summary>
+        /// 确保已初始化；未初始化时自动创建驱动器。
+        /// </summary>
+        private void EnsureInitialized()
+        {
+            if (_initialized && _driver != null)
+            {
+                return;
+            }
+
+            Initialize(null);
         }
 
         /// <summary>
@@ -312,7 +330,7 @@ namespace Manager
         /// 打印任务信息
         /// </summary>
         /// <returns></returns>
-            public string Dump()
+        public string Dump()
         {
             StringBuilder sb = new StringBuilder(256);
             sb.AppendLine($"[TimerMgr] Active={_activeTasks.Count}, GlobalPaused={_globalPaused}");
@@ -408,7 +426,7 @@ namespace Manager
                     continue;
                 }
 
-                bool finished = !task.IsInfinite && task.ExecutedCount >= task.RepeatCount;  // 如果任务是无限循环或已执行次数达到重复次数，则任务完成
+                bool finished = !task.IsInfinite && task.ExecutedCount >= task.RepeatCount;  // 如果任务不是无限循环但已执行次数达到重复次数，则任务完成
                 if (finished)
                 {
                     MarkCancelled(task);  // 标记任务为取消
@@ -448,11 +466,7 @@ namespace Manager
             string debugName,
             UniTaskCompletionSource completionSource = null)
         {
-            if (!_initialized)
-            {
-                Debug.LogError("[TimerMgr] 未初始化，请先在 Global 中调用 Initialize。");
-                return TimerHandle.Invalid;
-            }
+            EnsureInitialized();
 
             if (delay < 0f)
             {

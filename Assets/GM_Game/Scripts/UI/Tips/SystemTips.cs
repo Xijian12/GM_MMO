@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading;
-using Common;
-using Cysharp.Threading.Tasks;
+﻿using Common;
 using DG.Tweening;
 using Manager;
 using TMPro;
@@ -16,11 +13,13 @@ namespace UI.Tips
  	**/
     public class SystemTips : MonoBehaviour, IPoolable
     {
+        private const float LifeSeconds = 3f;
+
         [SerializeField, Header("提示文本")] private TMP_Text _textMsg;
         [SerializeField, Header("颜色曲线")] private AnimationCurve _colorCurve;
         [SerializeField, Header("移动曲线")] private AnimationCurve _moveCurve;
 
-        private CancellationTokenSource _lifeCts;
+        private TimerHandle _lifeTimer = TimerHandle.Invalid;
 
         /// <summary>
         /// 从池中取出并激活后调用。
@@ -34,7 +33,7 @@ namespace UI.Tips
         /// </summary>
         public void OnDespawn()
         {
-            CancelLifeTask();
+            CancelLifeTimer();
             transform.DOKill();
         }
 
@@ -44,8 +43,7 @@ namespace UI.Tips
         /// <param name="msg">提示文本</param>
         public void RefreshUI(string msg)
         {
-            CancelLifeTask();
-            _lifeCts = new CancellationTokenSource();
+            CancelLifeTimer();
 
             _textMsg.SetText(msg);
             _textMsg.DOColor(Color.red, 2f)
@@ -55,39 +53,33 @@ namespace UI.Tips
             rectTransform.DOAnchorPosY(rectTransform.anchoredPosition.y + Random.Range(200, 260), 2f)
                 .SetEase(_moveCurve);
 
-            DespawnAfterDelayAsync(_lifeCts.Token).Forget();
+            // Tips 用真实时间，游戏暂停时仍会按时归还
+            _lifeTimer = TimerMgr.Instance.Delay(
+                LifeSeconds,
+                OnLifeTimerFinished,
+                TimerType.RealTime,
+                this,
+                nameof(SystemTips));
+        }
+
+        private void OnLifeTimerFinished()
+        {
+            _lifeTimer = TimerHandle.Invalid;
+            GameObjectPoolMgr.Instance.Despawn(gameObject);
         }
 
         /// <summary>
-        /// 延迟归还池。
+        /// 取消生命周期定时器。
         /// </summary>
-        /// <param name="cancellationToken">取消令牌</param>
-        /// <returns></returns>
-        private async UniTaskVoid DespawnAfterDelayAsync(CancellationToken cancellationToken)
+        private void CancelLifeTimer()
         {
-            try
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(3f), cancellationToken: cancellationToken);
-                GameObjectPoolMgr.Instance.Despawn(gameObject);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-        }
-
-        /// <summary>
-        /// 取消生命周期任务。
-        /// </summary>
-        private void CancelLifeTask()
-        {
-            if (_lifeCts == null)
+            if (!_lifeTimer.IsValid)
             {
                 return;
             }
 
-            _lifeCts.Cancel();
-            _lifeCts.Dispose();
-            _lifeCts = null;
+            _lifeTimer.Cancel();
+            _lifeTimer = TimerHandle.Invalid;
         }
     }
 }
