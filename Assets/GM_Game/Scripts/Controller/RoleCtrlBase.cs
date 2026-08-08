@@ -18,6 +18,8 @@ namespace Controller
 
         protected RoleState _roleState;
 
+        private readonly int _lowsetGround = -10000;
+
         private void Awake()
         {
             _animator = GetComponent<Animator>();
@@ -45,22 +47,23 @@ namespace Controller
 
         private void IsGround()
         {
-            if (_verticalHeigth > transform.localPosition.y)
+            // 目的高度 大于 角色当前高度，角色需要上升
+            if (_verticalHeigth > transform.localPosition.y && CheckShareGround())
             {
                 _verticalSpeed = 20;
             }
-            else if (_verticalHeigth < transform.localPosition.y)
+            // 角色高度 大于 目的高度，角色需要下降
+            else if (_verticalHeigth < transform.localPosition.y && _verticalHeigth != _lowsetGround)
             {
-                _verticalHeigth = 0;
+                _verticalHeigth = _lowsetGround;
                 _verticalSpeed = -20;
 
             }
-            else
-            {
-                _verticalSpeed = -100;
-            }
 
-            _characterController.Move(transform.up * Time.deltaTime * _verticalSpeed);
+            // 过渡的值
+            _verticalSpeed -= Math.Abs(_verticalSpeed) * Time.fixedDeltaTime;
+
+            _characterController.Move(transform.up * Time.fixedDeltaTime * _verticalSpeed);
 
             // 检测是否在地面
             if (CheckShareGround())
@@ -70,6 +73,7 @@ namespace Controller
                 {
                     _animator.SetInteger("Action", 23);
                 }
+                _verticalSpeed = -100;
                 _verticalHeigth = transform.localPosition.y;
             }
         }
@@ -82,7 +86,8 @@ namespace Controller
         protected bool CheckShareGround()
         {
             // 检测当前位置半径范围内所有碰撞体，如果有碰撞则返回true
-            return Physics.CheckSphere(transform.position, 0.1f, 1 << LayerMask.NameToLayer("Geometry"));
+            Vector3 pos = transform.position + new Vector3(0, 0.1f, 0);
+            return Physics.CheckSphere(pos, 0.2f, 1 << LayerMask.NameToLayer("Geometry"));
         }
 
         /// <summary>
