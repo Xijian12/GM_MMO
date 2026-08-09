@@ -15,10 +15,11 @@
 
     public enum RoleState
     {
-        None,
+        // 调整角色默认状态为Idle，否则不能直接进行跳跃
         Idle,
         Run,
         FastRun,
-        Jump
+        Jump,
+        Slider
     }
 }

@@ -12,9 +12,12 @@ namespace Controller.InputController
     {
         private PlayerInput _input; // 玩家输入
 
+        // 快速跑相关事件
         public Action<bool> ShiftKeyIsPressEvenet;
-
+        // 跳跃相关事件
         public Action JumpingEvenet;
+        // 技能相关的按键按下
+        public Action<string> SkillKeyEvent;
 
         public Vector2 Movement => _input.Player.Movement.ReadValue<Vector2>();
         public bool Jump => _input.Player.Jump.WasPressedThisFrame();
@@ -48,6 +51,22 @@ namespace Controller.InputController
             _input.Player.Jump.started += (InputAction.CallbackContext ctx) =>
             {
                 JumpingEvenet?.Invoke();
+            };
+
+            // 当键盘的某一个键按下的时候
+            Keyboard.current.onTextInput += c =>
+            {
+                string key = c.ToString().ToUpper();
+                switch (key)
+                {
+                    case "Q":
+                    case "E":
+                    case "R":
+                    case "F":
+                        SkillKeyEvent?.Invoke(key);
+                        break;
+                }
+
             };
         }
 

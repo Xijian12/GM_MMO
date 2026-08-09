@@ -19,14 +19,31 @@ namespace Controller.RoleController
         private readonly float _rotateSpeed = 1000f;
 
         private TimerHandle _lifeTimer = TimerHandle.Invalid;
-
+        private GhostEffect _ghostEffect;
 
         protected override void OnAwake()
         {
             _playerInputCtrl = GetComponent<PlayerInputCtrl>();
+            _ghostEffect = GetComponent<GhostEffect>();
 
             _playerInputCtrl.ShiftKeyIsPressEvenet += ShiftKeyIsPress;
             _playerInputCtrl.JumpingEvenet += Jumping;
+            _playerInputCtrl.SkillKeyEvent += SkillKey;
+        }
+
+        /// <summary>
+        /// 技能相关按键事件
+        /// </summary>
+        /// <param name="key"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void SkillKey(string key)
+        {
+            switch (key)
+            {
+                case "F":   // 触发slide动画
+                    ChangeState(RoleState.Slider);
+                    break;
+            }
         }
 
         /// <summary>
@@ -35,7 +52,8 @@ namespace Controller.RoleController
         /// <exception cref="NotImplementedException"></exception>
         private void Jumping()
         {
-            if (_roleState == RoleState.Jump)
+            // 如果角色不在Idle状态，则不能跳跃
+            if (_roleState != RoleState.Idle)
             {
                 return;
             }
@@ -73,6 +91,12 @@ namespace Controller.RoleController
 
         protected override void OnUpdate()
         {
+            // 当角色启动滑行技能的时候，播放影子特效
+            if (_roleState == RoleState.Slider)
+            {
+                _ghostEffect.CreateGhostEffectObject(Color.white, 0.2f, 0.2f, 0.2f, 0.2f);
+            }
+
             PlayerMovement();
         }
 

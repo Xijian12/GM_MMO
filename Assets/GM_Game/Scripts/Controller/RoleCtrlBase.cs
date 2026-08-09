@@ -20,6 +20,8 @@ namespace Controller
 
         private readonly int _lowsetGround = -10000;
 
+        protected int _actionId = Animator.StringToHash("Action");
+
         private void Awake()
         {
             _animator = GetComponent<Animator>();
@@ -42,6 +44,15 @@ namespace Controller
         private void OnDestroy()
         {
             OnDespawn();
+        }
+
+        private void OnAnimatorMove()
+        {
+            if (_animator.deltaPosition != Vector3.zero)
+            {
+                // 乘以5的速度值后面需要重新定义
+                _characterController.Move(_animator.deltaPosition * 5);
+            }
         }
 
 
@@ -122,25 +133,24 @@ namespace Controller
             _roleState = state;
             switch (_roleState)
             {
-                case RoleState.None:
-                    _animator.SetInteger("Action", 0);
-                    break;
                 case RoleState.Idle:
-                    _animator.SetInteger("Action", 1);
+                    _animator.SetInteger(_actionId, 1);
                     break;
                 case RoleState.Run:
-                    _animator.SetInteger("Action", 2);
+                    _animator.SetInteger(_actionId, 2);
                     break;
                 case RoleState.FastRun:
-                    _animator.SetInteger("Action", 3);
+                    _animator.SetInteger(_actionId, 3);
                     break;
                 case RoleState.Jump:
-                    _animator.SetInteger("Action", 21);
+                    _animator.SetInteger(_actionId, 21);
+                    break;
+                case RoleState.Slider:
+                    _animator.SetInteger(_actionId, 41);
                     break;
                 default:
                     break;
             }
         }
-
     }
 }
