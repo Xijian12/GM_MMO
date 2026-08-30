@@ -6,188 +6,344 @@ using Cysharp.Threading.Tasks;
 using GM;
 using UnityEngine;
 using YooAsset;
+using Object = UnityEngine.Object;
 
 namespace Manager
 {
     /**
  	* Title:资源管理器
- 	* Desciption:缓存 YooAsset Prefab Handle，供对象池或业务直接实例化。
+ 	* Desciption:通用 Unity 资产加载入口；Handle 缓存与去重；Prefab 可经 usePool 走 GameObjectPoolMgr。
  	**/
     public class ResourceMgr : Singleton<ResourceMgr>
     {
-        // 缓存已加载的 Prefab Handle
-        private readonly Dictionary<string, AssetOperationHandle> _prefabHandleCacheDic = new Dictionary<string, AssetOperationHandle>();
-        // 缓存正在加载的 Prefab Handle
+        private const float CleanupIntervalSeconds = 30f;
+        private const float IdleHandleTtlSeconds = 30f;
+
+        // 缓存已加载的 Handle（key = ResourceType|shortPath）
+        private readonly Dictionary<string, AssetOperationHandle> _handleCache = new Dictionary<string, AssetOperationHandle>();
+        // 缓存正在加载的任务（Preserve 后可多处 await）
         private readonly Dictionary<string, UniTask<AssetOperationHandle>> _loadingTasks = new Dictionary<string, UniTask<AssetOperationHandle>>();
         // 缓存资源最后一次访问时间
         private readonly Dictionary<string, float> _lastAccessTimes = new Dictionary<string, float>();
+        private readonly List<string> _cacheKeyBuffer = new List<string>(32);
 
         /// <summary>
-        /// 获取已缓存的 Prefab Handle，供对象池实例化使用。
-		/// 去重/单飞 防止同一资源重复加载。
+        /// 构建缓存 Key。
         /// </summary>
-        public async UniTask<AssetOperationHandle> GetPrefabHandleAsync(string path, CancellationToken cancellationToken = default)
+        public static string BuildCacheKey(ResourceType type, string shortPath)
         {
-            // 尝试从缓存中获取已加载的 Prefab Handle
-            if (_prefabHandleCacheDic.TryGetValue(path, out AssetOperationHandle cachedHandle))
-            {
-                TouchAccess(path);
-                return cachedHandle;
-            }
-
-            // 尝试从加载任务中获取已加载的 Prefab Handle
-            // 如果正在加载，则返回正在加载的 Task
-            // 正在加载：await 已 Preserve 的同一 UniTask（UniTask 默认不能多次 await）
-            if (_loadingTasks.TryGetValue(path, out UniTask<AssetOperationHandle> loadingTask))
-            {
-                Debug.Log("使用缓存资源handle：" + path);
-                return await loadingTask.AttachExternalCancellation(cancellationToken);
-            }
-
-            // 创建新的加载任务；Preserve 允许多个调用方同时等待同一 path
-            UniTask<AssetOperationHandle> task = LoadPrefabHandleInternalAsync(path).Preserve();
-            _loadingTasks[path] = task;
-
-            Debug.Log("创建新的加载任务：" + path);
-
-            try
-            {
-                // 等待加载完成并返回 AssetOperationHandle
-                return await task.AttachExternalCancellation(cancellationToken);
-            }
-            finally
-            {
-                // 移除加载任务
-                _loadingTasks.Remove(path);
-            }
+            return $"{type}|{shortPath}";
         }
 
         /// <summary>
-        /// 异步加载并实例化 Prefab（不走对象池）。
+        /// 按类型拼完整资产路径。
         /// </summary>
-        /// <param name="path">资源路径，不包含 Prefab 根路径</param>
-        /// <param name="callback">回调函数</param>
-        public void LoadAssetAsync<T>(string path, Action<GameObject> callback) where T : UnityEngine.Object
+        public static string ResolveAssetPath(ResourceType type, string shortPath)
         {
-            LoadAssetAsyncInternal<T>(path, callback).Forget();
+            string root = type switch
+            {
+                ResourceType.Prefab => ConstDefine.PREFAB_PATH,
+                ResourceType.Texture => ConstDefine.TEXTURE_PATH,
+                ResourceType.Sprite => ConstDefine.SPRITE_PATH,
+                ResourceType.Audio => ConstDefine.AUDIO_PATH,
+                ResourceType.Material => ConstDefine.MATERIAL_PATH,
+                ResourceType.Scriptable => ConstDefine.SCRIPTABLE_PATH,
+                ResourceType.TextAsset => ConstDefine.TEXT_PATH,
+                _ => ConstDefine.BASE_PATH
+            };
+            return root + shortPath;
         }
 
         /// <summary>
-        /// 尝试获取已缓存的 Prefab Handle。
+        /// 通用异步加载资产本体（缓存 Handle）。
         /// </summary>
-        /// <param name="path">资源路径</param>
-        /// <param name="handle">获取到的 AssetOperationHandle</param>
-        /// <returns>是否获取成功</returns>
-        public bool TryGetCachedHandle(string path, out AssetOperationHandle handle)
+        public async UniTask<T> LoadAssetAsync<T>(
+            ResourceType type,
+            string shortPath,
+            CancellationToken cancellationToken = default)
+            where T : Object
         {
-            return _prefabHandleCacheDic.TryGetValue(path, out handle);
+            AssetOperationHandle handle = await GetHandleAsync(type, shortPath, cancellationToken);
+            if (handle == null)
+            {
+                return null;
+            }
+
+            return handle.AssetObject as T;
         }
 
         /// <summary>
-        /// 释放 Prefab Handle。
+        /// 异步获取 Prefab 实例。
+        /// usePool=true 时 RegisterTemplate + 出池；false 时 InstantiateSync 且不入池。
         /// </summary>
-        /// <param name="path">资源路径</param>
-        public void ReleasePrefabHandle(string path)
+        public async UniTask<GameObject> SpawnPrefabAsync(
+            string shortPath,
+            Transform parent,
+            bool usePool = true,
+            CancellationToken cancellationToken = default,
+            int maxIdle = 10)
         {
-            if (!_prefabHandleCacheDic.TryGetValue(path, out AssetOperationHandle handle))
+            AssetOperationHandle handle = await GetHandleAsync(
+                ResourceType.Prefab, shortPath, cancellationToken);
+            if (handle == null)
+            {
+                return null;
+            }
+
+            string key = BuildCacheKey(ResourceType.Prefab, shortPath);
+
+            if (usePool)
+            {
+                if (!GameObjectPoolMgr.Instance.IsInitialized)
+                {
+                    Debug.LogError("[ResourceMgr] GameObjectPoolMgr 未初始化，无法 usePool。");
+                    return null;
+                }
+
+                GameObjectPoolMgr.Instance.RegisterTemplate(key, handle, maxIdle);
+                return GameObjectPoolMgr.Instance.Spawn(key, parent);
+            }
+
+            return handle.InstantiateSync(parent);
+        }
+
+        /// <summary>
+        /// 归还池化实例，或 Destroy 非池化实例。
+        /// </summary>
+        public void Recycle(GameObject go)
+        {
+            if (go == null)
             {
                 return;
             }
 
-            // 释放 Prefab Handle
-            handle.Release();
-            // 移除缓存
-            _prefabHandleCacheDic.Remove(path);
-            // 移除资源最后一次访问时间
-            _lastAccessTimes.Remove(path);
+            PooledObject pooled = go.GetComponent<PooledObject>();
+            if (pooled != null && !string.IsNullOrEmpty(pooled.Path))
+            {
+                GameObjectPoolMgr.Instance.Despawn(go);
+                return;
+            }
+
+            Object.Destroy(go);
         }
 
         /// <summary>
-        /// 释放所有已缓存的 Prefab Handle。
+        /// 释放指定资源 Handle（Prefab 须无实例占用）。
+        /// </summary>
+        public void Release(ResourceType type, string shortPath)
+        {
+            if (string.IsNullOrEmpty(shortPath))
+            {
+                return;
+            }
+
+            string key = BuildCacheKey(type, shortPath);
+            if (type == ResourceType.Prefab && !GameObjectPoolMgr.Instance.CanReleaseHandle(key))
+            {
+                Debug.LogWarning($"[ResourceMgr] 仍有实例占用，拒绝 Release: {key}");
+                return;
+            }
+
+            if (!_handleCache.TryGetValue(key, out AssetOperationHandle handle))
+            {
+                return;
+            }
+
+            if (type == ResourceType.Prefab)
+            {
+                GameObjectPoolMgr.Instance.ClearPool(key);
+            }
+
+            handle.Release();
+            _handleCache.Remove(key);
+            _lastAccessTimes.Remove(key);
+        }
+
+        /// <summary>
+        /// 清空对象池并释放全部已缓存 Handle。
         /// </summary>
         public void ReleaseAll()
         {
-            // 释放所有已缓存的 Prefab Handle
-            foreach (AssetOperationHandle handle in _prefabHandleCacheDic.Values)
+            GameObjectPoolMgr.Instance.ClearAllAndReset();
+
+            foreach (AssetOperationHandle handle in _handleCache.Values)
             {
                 handle.Release();
             }
 
-            _prefabHandleCacheDic.Clear();
+            _handleCache.Clear();
             _lastAccessTimes.Clear();
-        }
-
-        /// <summary>
-        /// 获取当前已缓存的资源路径快照。
-		/// <param name="results">结果列表</param>
-        /// </summary>
-        public void CopyCachedPaths(List<string> results)
-        {
-            results.Clear();
-            foreach (string path in _prefabHandleCacheDic.Keys)
-            {
-                results.Add(path);
-            }
-        }
-
-        /// <summary>
-        /// 获取资源最后一次访问时间（Time.realtimeSinceStartup）。
-        /// </summary>
-        /// <param name="path">资源路径</param>
-        /// <param name="lastAccessTime">最后一次访问时间</param>
-        /// <returns>是否获取成功</returns>
-        public bool TryGetLastAccessTime(string path, out float lastAccessTime)
-        {
-            return _lastAccessTimes.TryGetValue(path, out lastAccessTime);
         }
 
         /// <summary>
         /// 更新资源访问时间。
         /// </summary>
-        public void TouchAccess(string path)
+        public void TouchAccess(ResourceType type, string shortPath)
         {
-            _lastAccessTimes[path] = Time.realtimeSinceStartup;
-        }
-
-        /// <summary>
-        /// 异步加载并实例化 Prefab（不走对象池）。
-        /// </summary>
-        /// <typeparam name="T">资源类型</typeparam>
-        /// <param name="path">资源路径</param>
-        /// <param name="callback">回调函数</param>
-        private async UniTaskVoid LoadAssetAsyncInternal<T>(string path, Action<GameObject> callback) where T : UnityEngine.Object
-        {
-            AssetOperationHandle handle = await GetPrefabHandleAsync(path);
-            if (handle == null)
+            if (string.IsNullOrEmpty(shortPath))
             {
-                callback?.Invoke(null);
                 return;
             }
 
-            GameObject go = handle.InstantiateSync();
-            callback?.Invoke(go);
+            string key = BuildCacheKey(type, shortPath);
+            _lastAccessTimes[key] = Time.realtimeSinceStartup;
         }
 
         /// <summary>
-        /// 加载 Prefab Handle
+        /// 启动闲置 Handle TTL 扫描（由 Global 在启动时调用）。
         /// </summary>
-        /// <param name="path">资源路径</param>
-        /// <returns>加载完成的 AssetOperationHandle</returns>
-        private async UniTask<AssetOperationHandle> LoadPrefabHandleInternalAsync(string path)
+        public void StartHandleCleanupLoop(CancellationToken cancellationToken)
         {
-            string assetPath = ConstDefine.PREFAB_PATH + path;
-            AssetOperationHandle handle = Global.Instance.YooPackage.LoadAssetAsync<GameObject>(assetPath);
+            HandleCleanupLoopAsync(cancellationToken).Forget();
+        }
+
+        /// <summary>
+        /// 扫描并释放超时且无占用的 Handle。
+        /// </summary>
+        public void TryEvictUnusedHandles(float idleTtlSeconds)
+        {
+            float now = Time.realtimeSinceStartup;
+            _cacheKeyBuffer.Clear();
+            foreach (string key in _handleCache.Keys)
+            {
+                _cacheKeyBuffer.Add(key);
+            }
+
+            for (int i = 0; i < _cacheKeyBuffer.Count; i++)
+            {
+                string key = _cacheKeyBuffer[i];
+                if (!_lastAccessTimes.TryGetValue(key, out float lastAccess))
+                {
+                    lastAccess = 0f;
+                }
+
+                if (now - lastAccess < idleTtlSeconds)
+                {
+                    continue;
+                }
+
+                if (!TryParseCacheKey(key, out ResourceType type, out string shortPath))
+                {
+                    continue;
+                }
+
+                if (type == ResourceType.Prefab)
+                {
+                    if (!GameObjectPoolMgr.Instance.CanReleaseHandle(key))
+                    {
+                        continue;
+                    }
+
+                    // 池若仍有 lastAccess，以池为准再判一次
+                    if (GameObjectPoolMgr.Instance.TryGetPoolState(key, out _, out _, out float poolLastAccess)
+                        && now - poolLastAccess < idleTtlSeconds)
+                    {
+                        continue;
+                    }
+                }
+
+                Release(type, shortPath);
+            }
+        }
+
+        private async UniTask<AssetOperationHandle> GetHandleAsync(
+            ResourceType type,
+            string shortPath,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(shortPath))
+            {
+                Debug.LogError("[ResourceMgr] shortPath 为空。");
+                return null;
+            }
+
+            string key = BuildCacheKey(type, shortPath);
+            if (_handleCache.TryGetValue(key, out AssetOperationHandle cachedHandle))
+            {
+                TouchAccess(type, shortPath);
+                return cachedHandle;
+            }
+
+            // 正在加载：await 已 Preserve 的同一 UniTask（UniTask 默认不能多次 await）
+            if (_loadingTasks.TryGetValue(key, out UniTask<AssetOperationHandle> loadingTask))
+            {
+                return await loadingTask.AttachExternalCancellation(cancellationToken);
+            }
+
+            // 创建新的加载任务；Preserve 允许多个调用方同时等待同一 key
+            UniTask<AssetOperationHandle> task = LoadHandleInternalAsync(type, shortPath, key).Preserve();
+            _loadingTasks[key] = task;
+
+            try
+            {
+                return await task.AttachExternalCancellation(cancellationToken);
+            }
+            finally
+            {
+                _loadingTasks.Remove(key);
+            }
+        }
+
+        private async UniTask<AssetOperationHandle> LoadHandleInternalAsync(
+            ResourceType type,
+            string shortPath,
+            string key)
+        {
+            string assetPath = ResolveAssetPath(type, shortPath);
+            AssetOperationHandle handle = Global.Instance.YooPackage.LoadAssetAsync(assetPath);
             await AwaitHandleAsync(handle);
 
             if (handle.Status != EOperationStatus.Succeed)
             {
-                Debug.LogError($"[ResourceMgr] 加载 Prefab 失败: {assetPath}, {handle.LastError}");
+                Debug.LogError($"[ResourceMgr] 加载失败: {assetPath}, {handle.LastError}");
                 return null;
             }
 
-            _prefabHandleCacheDic[path] = handle;
-            TouchAccess(path);
+            _handleCache[key] = handle;
+            TouchAccess(type, shortPath);
             return handle;
+        }
+
+        private async UniTaskVoid HandleCleanupLoopAsync(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    await UniTask.Delay(
+                        TimeSpan.FromSeconds(CleanupIntervalSeconds),
+                        cancellationToken: cancellationToken);
+                    TryEvictUnusedHandles(IdleHandleTtlSeconds);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+        }
+
+        private static bool TryParseCacheKey(string key, out ResourceType type, out string shortPath)
+        {
+            type = default;
+            shortPath = null;
+            if (string.IsNullOrEmpty(key))
+            {
+                return false;
+            }
+
+            int sep = key.IndexOf('|');
+            if (sep <= 0 || sep >= key.Length - 1)
+            {
+                return false;
+            }
+
+            if (!Enum.TryParse(key.Substring(0, sep), out type))
+            {
+                return false;
+            }
+
+            shortPath = key.Substring(sep + 1);
+            return true;
         }
 
         /// <summary>

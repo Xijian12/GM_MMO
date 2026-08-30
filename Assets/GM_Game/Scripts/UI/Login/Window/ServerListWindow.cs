@@ -10,7 +10,6 @@ using Manager;
 using TMPro;
 using UI;
 using UnityEngine;
-using YooAsset;
 
 namespace UI.Login
 {
@@ -93,14 +92,6 @@ namespace UI.Login
             // 清空当前的列表项
             ClearItems();
 
-            // 加载服务器列表项预制体
-            AssetOperationHandle handle = await ResourceMgr.Instance.GetPrefabHandleAsync(ServerListItemPath, token);
-            if (handle == null)
-            {
-                Debug.LogError("[ServerListWindow] 加载 ServerListWidgetItem 失败。");
-                return;
-            }
-
             // 创建服务器列表项
             try
             {
@@ -109,8 +100,17 @@ namespace UI.Login
                     // 如果取消，则抛出异常
                     token.ThrowIfCancellationRequested();
 
-                    // 实例化服务器列表项预制体
-                    GameObject go = handle.InstantiateSync(_itemParentTrans);
+                    GameObject go = await ResourceMgr.Instance.SpawnPrefabAsync(
+                        ServerListItemPath,
+                        _itemParentTrans,
+                        usePool: true,
+                        cancellationToken: token);
+                    if (go == null)
+                    {
+                        Debug.LogError("[ServerListWindow] 加载 ServerListWidgetItem 失败。");
+                        return;
+                    }
+
                     // 设置缩放为1
                     go.transform.localScale = Vector3.one;
                     go.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
@@ -173,7 +173,7 @@ namespace UI.Login
             {
                 if (_spawnedItems[i] != null)
                 {
-                    Destroy(_spawnedItems[i]);
+                    ResourceMgr.Instance.Recycle(_spawnedItems[i]);
                 }
             }
 

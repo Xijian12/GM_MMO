@@ -33,8 +33,10 @@ namespace GM
             poolRoot.SetParent(transform, false);
             // 初始化对象池管理器
             GameObjectPoolMgr.Instance.Initialize(poolRoot);
-            // 启动闲置资源 TTL 扫描（由 Global 在启动时调用）。
+            // 启动闲置实例 TTL 扫描（仅清实例，不 Release Handle）
             GameObjectPoolMgr.Instance.StartIdleAssetCleanupLoop(_appCts.Token);
+            // 启动闲置 Handle TTL 扫描
+            ResourceMgr.Instance.StartHandleCleanupLoop(_appCts.Token);
 
             // 初始化定时器管理器（挂在 Global 下，随 DontDestroyOnLoad 跨场景存活）
             Transform timerRoot = new GameObject("TimerRoot").transform;

@@ -21,5 +21,15 @@ namespace Role
         {
             _roleCtrl.ChangeState(RoleState.Idle);
         }
+
+        private void PlayEffect(string tag)
+        {
+            switch (tag)
+            {
+                case "atk01":
+                    // TODO: ResourceMgr.SpawnPrefabAsync / LoadAssetAsync 挂接攻击特效
+                    break;
+            }
+        }
     }
 }

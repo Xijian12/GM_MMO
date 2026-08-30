@@ -16,11 +16,10 @@ namespace Manager
     public class SceneMgr : Singleton<SceneMgr>
     {
         /// <summary>
-        /// 离开登录域：清空对象池并释放已缓存的 Prefab Handle。
+        /// 离开登录域：清空对象池并释放已缓存的资源 Handle。
         /// </summary>
         public void LeaveLoginScene()
         {
-            GameObjectPoolMgr.Instance.ClearAllAndReset();
             ResourceMgr.Instance.ReleaseAll();
         }
 

@@ -65,7 +65,7 @@ namespace UI.Tips
         private void OnLifeTimerFinished()
         {
             _lifeTimer = TimerHandle.Invalid;
-            GameObjectPoolMgr.Instance.Despawn(gameObject);
+            ResourceMgr.Instance.Recycle(gameObject);
         }
 
         /// <summary>

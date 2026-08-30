@@ -20,6 +20,7 @@
         Run,
         FastRun,
         Jump,
-        Slider
+        Slider,
+        Attack
     }
 }

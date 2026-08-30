@@ -10,6 +10,8 @@ namespace Controller
  	**/
     public class RoleCtrlBase : MonoBehaviour
     {
+        private readonly int _lowsetGround = -10000;
+        private int _atkIndex = 30;
 
         protected Animator _animator;
         protected CharacterController _characterController;
@@ -18,7 +20,6 @@ namespace Controller
 
         protected RoleState _roleState;
 
-        private readonly int _lowsetGround = -10000;
 
         protected int _actionId = Animator.StringToHash("Action");
 
@@ -147,6 +148,14 @@ namespace Controller
                     break;
                 case RoleState.Slider:
                     _animator.SetInteger(_actionId, 41);
+                    break;
+                case RoleState.Attack:
+                    _atkIndex++;
+                    _animator.SetInteger(_actionId, _atkIndex);
+                    if (_atkIndex >= 33)
+                    {
+                        _atkIndex = 30;
+                    }
                     break;
                 default:
                     break;

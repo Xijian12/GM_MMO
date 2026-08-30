@@ -10,17 +10,18 @@ namespace Manager
 {
     /**
      * Title:GameObject 对象池管理器
-     * Desciption:按 Prefab 路径管理多个 GameObjectPool，依赖 ResourceMgr 获取 YooAsset Handle。
+     * Desciption:按 cacheKey 管理多个 GameObjectPool；仅负责实例出池/还池与闲置实例清理，不依赖 ResourceMgr。
      **/
     public class GameObjectPoolMgr : Singleton<GameObjectPoolMgr>
     {
         private const int DefaultMaxIdle = 10;
         private const float CleanupIntervalSeconds = 30f;
-        private const float IdleAssetTtlSeconds = 30f;
+        private const float IdleInstanceTtlSeconds = 30f;
 
         private Transform _poolRoot;
         private readonly Dictionary<string, GameObjectPool> _pools = new Dictionary<string, GameObjectPool>();
-        private readonly List<string> _cachedPathBuffer = new List<string>(32);
+        private readonly Dictionary<string, AssetOperationHandle> _templates = new Dictionary<string, AssetOperationHandle>();
+        private readonly List<string> _poolKeyBuffer = new List<string>(32);
 
         public bool IsInitialized => _poolRoot != null;
 
@@ -38,69 +39,81 @@ namespace Manager
         }
 
         /// <summary>
-        /// 异步获取对象池中的对象。
+        /// 注册实例化模板（幂等：同一 cacheKey 重复调用覆盖/沿用，不新建第二套池）。
         /// </summary>
-        /// <param name="path">资源路径</param>
-        /// <param name="parent">父节点</param>
-        /// <param name="cancellationToken">取消令牌</param>
-        /// <param name="maxIdle">最大闲置对象数量</param>
-        /// <returns>获取到的对象</returns>
-        public async UniTask<GameObject> SpawnAsync(
-            string path,
-            Transform parent,
-            CancellationToken cancellationToken = default,
-            int maxIdle = DefaultMaxIdle)
+        /// <param name="cacheKey">缓存键，例如 Prefab|UIPrefabs/SystemTips</param>
+        /// <param name="handle">已加载的 YooAsset Handle</param>
+        /// <param name="maxIdle">最大闲置实例数</param>
+        public void RegisterTemplate(string cacheKey, AssetOperationHandle handle, int maxIdle = DefaultMaxIdle)
+        {
+            if (string.IsNullOrEmpty(cacheKey) || handle == null)
+            {
+                Debug.LogError("[GameObjectPoolMgr] RegisterTemplate 参数无效。");
+                return;
+            }
+
+            if (!IsInitialized)
+            {
+                Debug.LogError("[GameObjectPoolMgr] 未初始化，无法 RegisterTemplate。");
+                return;
+            }
+
+            _templates[cacheKey] = handle;
+            GetOrCreatePool(cacheKey, maxIdle);
+        }
+
+        /// <summary>
+        /// 从对象池取出实例（须先 RegisterTemplate）。
+        /// </summary>
+        public GameObject Spawn(string cacheKey, Transform parent)
         {
             if (!IsInitialized)
             {
-                Debug.LogError("[GameObjectPoolMgr] 未初始化，请先调用 Initialize。");
+                Debug.LogError("[GameObjectPoolMgr] 未初始化。");
                 return null;
             }
 
-            if (string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(cacheKey))
             {
-                Debug.LogError("[GameObjectPoolMgr] SpawnAsync path 为空。");
+                Debug.LogError("[GameObjectPoolMgr] Spawn cacheKey 为空。");
                 return null;
             }
 
-            GameObjectPool pool = GetOrCreatePool(path, maxIdle);
-            ResourceMgr.Instance.TouchAccess(path);
-            // 异步获取 Prefab Handle
-            AssetOperationHandle handle = await ResourceMgr.Instance.GetPrefabHandleAsync(path, cancellationToken);
-            // 如果获取到的 Prefab Handle 为空，则返回 null
-            if (handle == null)
+            if (!_templates.TryGetValue(cacheKey, out AssetOperationHandle handle) || handle == null)
             {
+                Debug.LogError($"[GameObjectPoolMgr] 未 RegisterTemplate: {cacheKey}");
                 return null;
             }
 
+            GameObjectPool pool = GetOrCreatePool(cacheKey, DefaultMaxIdle);
             return pool.Spawn(handle, parent);
         }
 
         /// <summary>
         /// 归还对象池中的对象。
         /// </summary>
-        /// <param name="path">资源路径</param>
+        /// <param name="cacheKey">缓存键</param>
         /// <param name="go">要归还的对象</param>
-        public void Despawn(string path, GameObject go)
+        public void Despawn(string cacheKey, GameObject go)
         {
-            if (go == null || string.IsNullOrEmpty(path))
+            if (go == null || string.IsNullOrEmpty(cacheKey))
             {
                 return;
             }
 
-            if (_pools.TryGetValue(path, out GameObjectPool pool))
+            if (_pools.TryGetValue(cacheKey, out GameObjectPool pool))
             {
                 pool.Despawn(go);
             }
             else
             {
-                Debug.LogWarning($"[GameObjectPoolMgr] Despawn 时未找到池: {path}，将直接销毁。");
+                Debug.LogWarning($"[GameObjectPoolMgr] Despawn 时未找到池: {cacheKey}，将直接销毁。");
                 UnityEngine.Object.Destroy(go);
             }
         }
 
         /// <summary>
-        /// 通过 PooledObject 标记归还，无需再传 path。
+        /// 通过 PooledObject 标记归还，无需再传 cacheKey。
         /// </summary>
         public void Despawn(GameObject go)
         {
@@ -123,16 +136,18 @@ namespace Manager
         }
 
         /// <summary>
-        /// 清空指定对象池
+        /// 清空指定对象池（仅销毁闲置实例并移除池条目；不 Release Handle）。
         /// </summary>
-        /// <param name="path">资源路径</param>
-        public void ClearPool(string path)
+        /// <param name="cacheKey">缓存键</param>
+        public void ClearPool(string cacheKey)
         {
-            if (_pools.TryGetValue(path, out GameObjectPool pool))
+            if (_pools.TryGetValue(cacheKey, out GameObjectPool pool))
             {
                 pool.Clear();
-                _pools.Remove(path);
+                _pools.Remove(cacheKey);
             }
+
+            _templates.Remove(cacheKey);
         }
 
         /// <summary>
@@ -146,89 +161,114 @@ namespace Manager
             }
 
             _pools.Clear();
+            _templates.Clear();
         }
 
         /// <summary>
-        /// 尝试获取指定路径的对象池。
+        /// 尝试获取指定 cacheKey 的对象池。
         /// </summary>
-        public bool TryGetPool(string path, out GameObjectPool pool)
+        public bool TryGetPool(string cacheKey, out GameObjectPool pool)
         {
-            return _pools.TryGetValue(path, out pool);
+            return _pools.TryGetValue(cacheKey, out pool);
         }
 
         /// <summary>
-        /// 启动闲置资源 TTL 扫描（由 Global 在启动时调用）。
+        /// 查询池状态（无池返回 false）。
+        /// </summary>
+        public bool TryGetPoolState(string cacheKey, out int active, out int idle, out float lastAccess)
+        {
+            active = 0;
+            idle = 0;
+            lastAccess = 0f;
+            if (!_pools.TryGetValue(cacheKey, out GameObjectPool pool))
+            {
+                return false;
+            }
+
+            active = pool.ActiveCount;
+            idle = pool.IdleCount;
+            lastAccess = pool.LastAccessTime;
+            return true;
+        }
+
+        /// <summary>
+        /// 该 cacheKey 上是否已无实例占用（无池视为可释放 Handle）。
+        /// </summary>
+        public bool CanReleaseHandle(string cacheKey)
+        {
+            if (!_pools.TryGetValue(cacheKey, out GameObjectPool pool))
+            {
+                return true;
+            }
+
+            return pool.CanReleaseAsset;
+        }
+
+        /// <summary>
+        /// 启动闲置实例 TTL 扫描（仅清闲置实例，不 Release YooAsset Handle）。
         /// </summary>
         public void StartIdleAssetCleanupLoop(CancellationToken cancellationToken)
         {
-            IdleAssetCleanupLoopAsync(cancellationToken).Forget();
+            IdleInstanceCleanupLoopAsync(cancellationToken).Forget();
         }
 
         /// <summary>
-        /// 扫描并释放长时间未使用且无实例占用的 Prefab Handle。
+        /// 扫描并销毁长时间未使用池中的闲置实例（池变为可释放后由 ResourceMgr 决定是否 Release Handle）。
         /// </summary>
-        /// <param name="idleTtlSeconds">闲置对象 TTL 时间</param>
-        public void TryEvictUnusedAssets(float idleTtlSeconds)
+        /// <param name="idleTtlSeconds">闲置 TTL 时间</param>
+        public void TryEvictUnusedIdleInstances(float idleTtlSeconds)
         {
             float now = Time.realtimeSinceStartup;
-            ResourceMgr resourceMgr = ResourceMgr.Instance;
-            resourceMgr.CopyCachedPaths(_cachedPathBuffer);
-
-            // 遍历所有缓存的资源路径
-            for (int i = 0; i < _cachedPathBuffer.Count; i++)
+            _poolKeyBuffer.Clear();
+            foreach (string key in _pools.Keys)
             {
-                string path = _cachedPathBuffer[i];
+                _poolKeyBuffer.Add(key);
+            }
 
-                // 尝试获取对应路径的对象池
-                if (_pools.TryGetValue(path, out GameObjectPool pool))
-                {
-                    // 如果对象池中还有活跃对象，则跳过
-                    if (!pool.CanReleaseAsset)
-                    {
-                        continue;
-                    }
-
-                    if (now - pool.LastAccessTime < idleTtlSeconds)
-                    {
-                        continue;
-                    }
-                }
-                // 如果获取不到对应路径的对象池，则尝试获取对应路径的 Prefab Handle 的最后一次访问时间
-                else if (resourceMgr.TryGetLastAccessTime(path, out float lastAccessTime))
-                {
-                    // 如果最后一次访问时间小于闲置对象 TTL 时间，则跳过
-                    if (now - lastAccessTime < idleTtlSeconds)
-                    {
-                        continue;
-                    }
-                }
-                else
+            for (int i = 0; i < _poolKeyBuffer.Count; i++)
+            {
+                string cacheKey = _poolKeyBuffer[i];
+                if (!_pools.TryGetValue(cacheKey, out GameObjectPool pool))
                 {
                     continue;
                 }
 
-                ClearPool(path);
-                resourceMgr.ReleasePrefabHandle(path);
+                if (pool.ActiveCount > 0)
+                {
+                    continue;
+                }
+
+                if (pool.IdleCount == 0)
+                {
+                    continue;
+                }
+
+                if (now - pool.LastAccessTime < idleTtlSeconds)
+                {
+                    continue;
+                }
+
+                // 仅清闲置实例并移除空池/模板登记；Handle 留给 ResourceMgr
+                pool.Clear();
+                _pools.Remove(cacheKey);
+                _templates.Remove(cacheKey);
             }
         }
 
         /// <summary>
-        /// 启动闲置资源 TTL 扫描（由 Global 在启动时调用）。
+        /// 启动闲置实例 TTL 扫描。
         /// </summary>
         /// <param name="cancellationToken">取消令牌</param>
-        private async UniTaskVoid IdleAssetCleanupLoopAsync(CancellationToken cancellationToken)
+        private async UniTaskVoid IdleInstanceCleanupLoopAsync(CancellationToken cancellationToken)
         {
-            // 循环扫描并释放长时间未使用且无实例占用的 Prefab Handle
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    // 延迟一段时间后再次扫描
                     await UniTask.Delay(
                         TimeSpan.FromSeconds(CleanupIntervalSeconds),
                         cancellationToken: cancellationToken);
-                    // 扫描并释放长时间未使用且无实例占用的 Prefab Handle
-                    TryEvictUnusedAssets(IdleAssetTtlSeconds);
+                    TryEvictUnusedIdleInstances(IdleInstanceTtlSeconds);
                 }
                 catch (OperationCanceledException)
                 {
@@ -240,15 +280,15 @@ namespace Manager
         /// <summary>
         /// 获取或创建对象池
         /// </summary>
-        /// <param name="path">资源路径</param>
+        /// <param name="cacheKey">缓存键</param>
         /// <param name="maxIdle">最大闲置对象数量</param>
         /// <returns>获取到的对象池</returns>
-        private GameObjectPool GetOrCreatePool(string path, int maxIdle)
+        private GameObjectPool GetOrCreatePool(string cacheKey, int maxIdle)
         {
-            if (!_pools.TryGetValue(path, out GameObjectPool pool))
+            if (!_pools.TryGetValue(cacheKey, out GameObjectPool pool))
             {
-                pool = new GameObjectPool(path, _poolRoot, maxIdle);
-                _pools.Add(path, pool);
+                pool = new GameObjectPool(cacheKey, _poolRoot, maxIdle);
+                _pools.Add(cacheKey, pool);
             }
 
             return pool;

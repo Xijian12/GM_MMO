@@ -6,8 +6,8 @@ using YooAsset;
 namespace Manager
 {
     /**
-     * Title:单个 Prefab 路径的 GameObject 对象池
-     * Desciption:复用已实例化的 GameObject，不负责 YooAsset Handle 的加载与释放。
+     * Title:单个 cacheKey 的 GameObject 对象池
+     * Desciption:复用已实例化的 GameObject，不负责 YooAsset Handle 的加载与释放。Path 字段存 cacheKey。
      **/
     public class GameObjectPool
     {

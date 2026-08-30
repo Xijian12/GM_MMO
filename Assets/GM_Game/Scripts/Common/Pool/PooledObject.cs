@@ -4,7 +4,7 @@ namespace Manager
 {
     /**
      * Title:池化对象标记
-     * Desciption:由对象池自动挂载，记录资源路径，支持 Despawn(GameObject) 无需再传 path。
+     * Desciption:由对象池自动挂载，记录 cacheKey（如 Prefab|短路径），支持 Despawn(GameObject) 无需再传 key。
      **/
     public class PooledObject : MonoBehaviour
     {

@@ -33,8 +33,9 @@ namespace Manager
                 return;
             }
 
-            // 从对象池中获取 SystemTips 预制体
-            GameObject go = await GameObjectPoolMgr.Instance.SpawnAsync(SystemTipsPath, parent);
+            // 从 ResourceMgr 获取 SystemTips 实例（走对象池）
+            GameObject go = await ResourceMgr.Instance.SpawnPrefabAsync(
+                SystemTipsPath, parent, usePool: true);
             if (go == null)
             {
                 return;

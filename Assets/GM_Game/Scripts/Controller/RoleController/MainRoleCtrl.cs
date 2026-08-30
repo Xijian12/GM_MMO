@@ -43,6 +43,9 @@ namespace Controller.RoleController
                 case "F":   // 触发slide动画
                     ChangeState(RoleState.Slider);
                     break;
+                case "Q":   //触发普通攻击动画
+                    ChangeState(RoleState.Attack);
+                    break;
             }
         }
 
