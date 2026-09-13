@@ -1,5 +1,6 @@
 ﻿using System;
 using Common;
+using Manager;
 using UnityEngine;
 
 namespace Controller
@@ -19,7 +20,9 @@ namespace Controller
         protected float _verticalHeigth;    // y轴方向移动的高度
 
         protected RoleState _roleState;
-
+        protected TimerHandle _lifeTimer = TimerHandle.Invalid;
+        protected float _atkInterval = 1f;
+        private float _rootMotionSpeed;
 
         protected int _actionId = Animator.StringToHash("Action");
 
@@ -49,10 +52,18 @@ namespace Controller
 
         private void OnAnimatorMove()
         {
+            if (_roleState == RoleState.Slider)
+            {
+                _rootMotionSpeed = 5;
+            }
+            else
+            {
+                _rootMotionSpeed = 1;
+            }
             if (_animator.deltaPosition != Vector3.zero)
             {
                 // 乘以5的速度值后面需要重新定义
-                _characterController.Move(_animator.deltaPosition * 5);
+                _characterController.Move(_animator.deltaPosition * _rootMotionSpeed);
             }
         }
 
@@ -151,7 +162,19 @@ namespace Controller
                     break;
                 case RoleState.Attack:
                     _atkIndex++;
+
+                    if (_lifeTimer.IsValid)
+                    {
+                        _lifeTimer.Cancel();
+                    }
+
+                    _lifeTimer = TimerMgr.Instance.Delay(_atkInterval, () =>
+                    {
+                        _atkIndex = 30;
+                    }, TimerType.GameTime, this, nameof(ChangeState));
+
                     _animator.SetInteger(_actionId, _atkIndex);
+
                     if (_atkIndex >= 33)
                     {
                         _atkIndex = 30;

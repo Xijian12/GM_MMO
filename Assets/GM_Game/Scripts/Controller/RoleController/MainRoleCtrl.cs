@@ -18,7 +18,6 @@ namespace Controller.RoleController
 
         private readonly float _rotateSpeed = 1000f;
 
-        private TimerHandle _lifeTimer = TimerHandle.Invalid;
         private GhostEffect _ghostEffect;
 
         protected override void OnAwake()
@@ -109,6 +108,7 @@ namespace Controller.RoleController
         /// <exception cref="NotImplementedException"></exception>
         private void PlayerMovement()
         {
+            if (_roleState == RoleState.Attack) { return; }
             // 角色移动键是否按下
             if (_playerInputCtrl.Movement != Vector2.zero)
             {

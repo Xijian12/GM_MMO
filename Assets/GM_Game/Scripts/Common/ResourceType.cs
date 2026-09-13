@@ -1,4 +1,4 @@
-namespace Common
+﻿namespace Common
 {
     /**
      * Title:资源类型
@@ -13,5 +13,6 @@ namespace Common
         Material = 4,
         Scriptable = 5,
         TextAsset = 6,
+        Effect = 7,
     }
 }

@@ -49,13 +49,14 @@ namespace Manager
                 ResourceType.Material => ConstDefine.MATERIAL_PATH,
                 ResourceType.Scriptable => ConstDefine.SCRIPTABLE_PATH,
                 ResourceType.TextAsset => ConstDefine.TEXT_PATH,
+                ResourceType.Effect => ConstDefine.EFFECT_PATH,
                 _ => ConstDefine.BASE_PATH
             };
             return root + shortPath;
         }
 
         /// <summary>
-        /// 通用异步加载资产本体（缓存 Handle）。
+        /// 通用异步加载资产并实例化后的对象（缓存 Handle）。
         /// </summary>
         public async UniTask<T> LoadAssetAsync<T>(
             ResourceType type,
@@ -69,7 +70,7 @@ namespace Manager
                 return null;
             }
 
-            return handle.AssetObject as T;
+            return handle.InstantiateSync() as T;
         }
 
         /// <summary>
